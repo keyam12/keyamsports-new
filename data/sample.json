@@ -1,0 +1,8 @@
+
+{
+  "articles": [
+    { "title": "Lakers Rally Past Celtics", "summary": "LeBron James leads a 4th quarter comeback.", "category": "basketball" },
+    { "title": "Yankees Clinch Division", "summary": "Strong pitching seals the AL East title.", "category": "baseball" },
+    { "title": "Messi Scores Twice", "summary": "Inter Miami tops standings after a 3-1 win.", "category": "soccer" }
+  ]
+}
