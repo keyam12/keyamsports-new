@@ -18,8 +18,8 @@ export default function LiveScoresWidget() {
   }
 
   useEffect(() => {
-    loadScores(); // load immediately
-    const interval = setInterval(loadScores, 5 * 60 * 1000); // refresh every 5 minutes
+    loadScores();
+    const interval = setInterval(loadScores, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -29,7 +29,7 @@ export default function LiveScoresWidget() {
   if (games.length === 0)
     return (
       <div className="p-4 bg-white border rounded text-center text-gray-600">
-        ⚽🏀⚾🏈 <br />
+        ⚽🏀⚾🏈<br />
         <strong>No live games right now</strong>
         <p className="text-sm">Check back later for real-time updates.</p>
       </div>
@@ -37,23 +37,50 @@ export default function LiveScoresWidget() {
 
   return (
     <div className="border rounded p-4 bg-white">
-      <h4 className="font-bold mb-2">Live Scores (TheSportsDB)</h4>
-      <div className="space-y-3">
+      <h4 className="font-bold mb-3">Live Scores (TheSportsDB)</h4>
+      <div className="space-y-4">
         {games.map((g, i) => (
-          <div key={i} className="flex justify-between border-b pb-2">
-            <div>
-              <div className="font-semibold text-sm">
-                {g.sport} - {g.league}
+          <div
+            key={i}
+            className="flex justify-between items-center border-b pb-2 gap-3"
+          >
+            <div className="flex items-center gap-2">
+              {g.teams.homeLogo && (
+                <img
+                  src={g.teams.homeLogo}
+                  alt={g.teams.home}
+                  className="w-6 h-6 rounded-full"
+                />
+              )}
+              <span className="text-sm font-semibold">
+                {g.teams.home}
+              </span>
+              <span className="text-xs text-gray-500">vs</span>
+              <span className="text-sm font-semibold">
+                {g.teams.away}
+              </span>
+              {g.teams.awayLogo && (
+                <img
+                  src={g.teams.awayLogo}
+                  alt={g.teams.away}
+                  className="w-6 h-6 rounded-full"
+                />
+              )}
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-lg">
+                {g.scores.home}-{g.scores.away}
               </div>
               <div className="text-xs text-gray-500">
-                {g.teams.home} vs {g.teams.away} ({g.time})
+                {g.league} ({g.time})
               </div>
-            </div>
-            <div className="font-bold">
-              {g.scores.home} - {g.scores.away}
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
       </div>
     </div>
   );
