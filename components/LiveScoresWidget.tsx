@@ -5,19 +5,22 @@ export default function LiveScoresWidget() {
   const [games, setGames] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadScores() {
-      try {
-        const res = await fetch('/api/live-scores');
-        const data = await res.json();
-        setGames(data.results || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+  async function loadScores() {
+    try {
+      const res = await fetch('/api/live-scores');
+      const data = await res.json();
+      setGames(data.results || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    loadScores();
+  }
+
+  useEffect(() => {
+    loadScores(); // load immediately
+    const interval = setInterval(loadScores, 5 * 60 * 1000); // refresh every 5 minutes
+    return () => clearInterval(interval);
   }, []);
 
   if (loading)
@@ -39,12 +42,16 @@ export default function LiveScoresWidget() {
         {games.map((g, i) => (
           <div key={i} className="flex justify-between border-b pb-2">
             <div>
-              <div className="font-semibold text-sm">{g.sport} - {g.league}</div>
+              <div className="font-semibold text-sm">
+                {g.sport} - {g.league}
+              </div>
               <div className="text-xs text-gray-500">
-                {g.teams.home} vs {g.teams.away}
+                {g.teams.home} vs {g.teams.away} ({g.time})
               </div>
             </div>
-            <div className="font-bold">{g.scores.home} - {g.scores.away}</div>
+            <div className="font-bold">
+              {g.scores.home} - {g.scores.away}
+            </div>
           </div>
         ))}
       </div>
