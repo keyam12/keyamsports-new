@@ -7,7 +7,9 @@ export async function GET() {
     const allResults: any[] = [];
 
     for (const s of sports) {
-      const res = await fetch(`https://www.thesportsdb.com/api/v1/json/${key}/livescore.php?s=${s}`);
+      const res = await fetch(
+        `https://www.thesportsdb.com/api/v1/json/${key}/livescore.php?s=${s}`
+      );
       if (!res.ok) continue;
       const data = await res.json();
       if (data && data.events) {
