@@ -1,33 +1,33 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
+  const key = process.env.THESPORTSDB_KEY || '123';
+
+  const sports = ['Soccer', 'Basketball', 'Baseball', 'American%20Football'];
+  const allResults: any[] = [];
+
   try {
-    const key = process.env.THESPORTSDB_KEY || '123';
-    const url = `https://www.thesportsdb.com/api/v1/json/${key}/livescore.php?s=Soccer`;
-
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`API request failed with status ${res.status}`);
+    // Fetch each sport sequentially
+    for (const s of sports) {
+      const res = await fetch(`https://www.thesportsdb.com/api/v1/json/${key}/livescore.php?s=${s}`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data && data.events) {
+        data.events.forEach((match: any) => {
+          allResults.push({
+            sport: decodeURIComponent(s),
+            league: match.strLeague,
+            teams: { home: match.strHomeTeam, away: match.strAwayTeam },
+            scores: { home: match.intHomeScore, away: match.intAwayScore },
+            time: match.strProgress || 'N/A',
+          });
+        });
+      }
     }
 
-    const data = await res.json();
-    if (!data || !data.events) {
-      return NextResponse.json({ results: [], note: "No live matches or invalid response" });
-    }
-
-    const results = data.events.map((match: any) => ({
-      league: match.strLeague,
-      teams: { home: match.strHomeTeam, away: match.strAwayTeam },
-      scores: { home: match.intHomeScore, away: match.intAwayScore },
-      time: match.strProgress || "N/A",
-    }));
-
-    return NextResponse.json({ results });
+    return NextResponse.json({ results: allResults });
   } catch (error: any) {
-    console.error("Live score API error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Live score API error:', error);
+    return NextResponse.json({ results: [], error: error.message }, { status: 500 });
   }
 }
