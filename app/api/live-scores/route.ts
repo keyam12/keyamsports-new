@@ -2,38 +2,43 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const key = process.env.THESPORTSDB_KEY || '123';
-    const sports = ['Soccer', 'Basketball', 'Baseball', 'American%20Football'];
-    const allResults: any[] = [];
+    // Placeholder demo data until you connect your real API
+    const mockData = {
+      results: [
+        {
+          league: 'NBA',
+          teams: { home: 'Lakers', away: 'Celtics' },
+          scores: { home: 108, away: 101 },
+          time: 'Final',
+        },
+        {
+          league: 'NFL',
+          teams: { home: 'Eagles', away: 'Cowboys' },
+          scores: { home: 24, away: 27 },
+          time: 'Q4 03:25',
+        },
+        {
+          league: 'MLB',
+          teams: { home: 'Yankees', away: 'Red Sox' },
+          scores: { home: 5, away: 4 },
+          time: 'Top 9th',
+        },
+        {
+          league: 'Soccer (La Liga)',
+          teams: { home: 'Real Madrid', away: 'Barcelona' },
+          scores: { home: 2, away: 2 },
+          time: '90+2’',
+        },
+      ],
+    };
 
-    for (const s of sports) {
-      const res = await fetch(
-        `https://www.thesportsdb.com/api/v1/json/${key}/livescore.php?s=${s}`
-      );
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data && data.events) {
-        data.events.forEach((match: any) => {
-          allResults.push({
-            sport: decodeURIComponent(s),
-            league: match.strLeague,
-            teams: {
-              home: match.strHomeTeam,
-              away: match.strAwayTeam,
-            },
-            scores: {
-              home: match.intHomeScore,
-              away: match.intAwayScore,
-            },
-            time: match.strProgress || 'N/A',
-          });
-        });
-      }
-    }
-
-    return NextResponse.json({ results: allResults });
+    // Return JSON response
+    return NextResponse.json(mockData);
   } catch (error: any) {
     console.error('Live score API error:', error);
-    return NextResponse.json({ results: [], error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { results: [], error: error.message },
+      { status: 500 }
+    );
   }
 }
