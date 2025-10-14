@@ -1,15 +1,36 @@
-
 import OpenAI from "openai";
+import fs from "fs";
 
-export async function generateHeadline(sport: string, summary: string) {
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const prompt = `Write a short, exciting ${sport} headline about: ${summary}`;
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-  const response = await client.responses.create({
+export async function runMainAgent() {
+  console.log("🤖 Running Main Agent...");
+
+  const prompt = `
+  Generate a short AI-powered sports recap for KEYAM SPORTS.
+  Include trending updates about NBA, MLB, NFL, or Soccer.
+  Format like this:
+  ---
+  🏆 Headline: [title]
+  📰 Recap: [2 short paragraphs]
+  📊 Key Stat: [stat highlight]
+  `;
+
+  const response = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    input: prompt
+    messages: [{ role: "user", content: prompt }],
   });
 
-  // @ts-ignore
-  return (response as any).output_text || JSON.stringify(response);
+  const output = response.choices[0].message?.content || "No output";
+
+  // Save output as a simple text file (for now)
+  fs.writeFileSync("latest_agent_post.txt", output);
+
+  console.log("✅ AI content generated and saved!");
+  console.log(output);
 }
+
+// For manual testing:
+runMainAgent();
