@@ -19,7 +19,7 @@ export default function LiveScoresWidget() {
 
   useEffect(() => {
     loadScores();
-    const interval = setInterval(loadScores, 5 * 60 * 1000);
+    const interval = setInterval(loadScores, 5 * 60 * 1000); // refresh every 5 min
     return () => clearInterval(interval);
   }, []);
 
@@ -77,10 +77,6 @@ export default function LiveScoresWidget() {
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
       </div>
     </div>
   );
