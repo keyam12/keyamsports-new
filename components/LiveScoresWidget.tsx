@@ -19,7 +19,7 @@ export default function LiveScoresWidget() {
 
   useEffect(() => {
     loadScores();
-    const interval = setInterval(loadScores, 5 * 60 * 1000); // refresh every 5 min
+    const interval = setInterval(loadScores, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -40,10 +40,7 @@ export default function LiveScoresWidget() {
       <h4 className="font-bold mb-3">Live Scores (TheSportsDB)</h4>
       <div className="space-y-4">
         {games.map((g, i) => (
-          <div
-            key={i}
-            className="flex justify-between items-center border-b pb-2 gap-3"
-          >
+          <div key={i} className="flex justify-between items-center border-b pb-2 gap-3">
             <div className="flex items-center gap-2">
               {g.teams.homeLogo && (
                 <img
@@ -52,13 +49,9 @@ export default function LiveScoresWidget() {
                   className="w-6 h-6 rounded-full"
                 />
               )}
-              <span className="text-sm font-semibold">
-                {g.teams.home}
-              </span>
+              <span className="text-sm font-semibold">{g.teams.home}</span>
               <span className="text-xs text-gray-500">vs</span>
-              <span className="text-sm font-semibold">
-                {g.teams.away}
-              </span>
+              <span className="text-sm font-semibold">{g.teams.away}</span>
               {g.teams.awayLogo && (
                 <img
                   src={g.teams.awayLogo}
