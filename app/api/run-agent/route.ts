@@ -1,44 +1,32 @@
 import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function GET() {
-  const key = process.env.THESPORTSDB_KEY || '123';
-  const sports = ['Soccer', 'Basketball', 'Baseball', 'American%20Football'];
-  const allResults: any[] = [];
-
   try {
-    for (const s of sports) {
-      const res = await fetch(
-        `https://www.thesportsdb.com/api/v1/json/${key}/livescore.php?s=${s}`
-      );
-      if (!res.ok) continue;
+    const prompt = `
+    Generate a short AI-powered sports recap for KEYAM SPORTS.
+    Include trending updates about NBA, MLB, NFL, or Soccer.
+    Format like this:
+    ---
+    🏆 Headline: [title]
+    📰 Recap: [2 short paragraphs]
+    📊 Key Stat: [stat highlight]
+    `;
 
-      const data = await res.json();
-      if (data && data.events) {
-        data.events.forEach((match: any) => {
-          allResults.push({
-            sport: decodeURIComponent(s),
-            league: match.strLeague,
-            leagueLogo: match.strBadge || match.strLeagueBadge,
-            teams: {
-              home: match.strHomeTeam,
-              away: match.strAwayTeam,
-              homeLogo: match.strHomeTeamBadge,
-              awayLogo: match.strAwayTeamBadge,
-            },
-            scores: { home: match.intHomeScore, away: match.intAwayScore },
-            time: match.strProgress || 'N/A',
-          });
-        });
-      }
-    }
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+    });
 
-    return NextResponse.json({ results: allResults });
+    const output = response.choices[0].message?.content || 'No output';
+
+    return NextResponse.json({ ok: true, text: output });
   } catch (error: any) {
-    console.error('Live score API error:', error);
-    return NextResponse.json({ results: [], error: error.message }, { status: 500 });
-  }
-}
-    console.error('Live score API error:', error);
-    return NextResponse.json({ results: [], error: error.message }, { status: 500 });
+    console.error('Agent error:', error);
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }
