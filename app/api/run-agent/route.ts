@@ -1,12 +1,19 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export const dynamic = "force-dynamic";
+
+function getClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is not configured");
+  }
+  return new OpenAI({ apiKey });
+}
 
 export async function GET() {
   try {
+    const client = getClient();
     const prompt = `
     Generate a short AI-powered sports recap for KEYAM SPORTS.
     Include trending updates about NBA, MLB, NFL, or Soccer.

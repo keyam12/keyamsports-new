@@ -9,6 +9,7 @@ export default function Header() {
           <a href="/basketball">Basketball</a>
           <a href="/baseball">Baseball</a>
           <a href="/soccer">Soccer</a>
+          <a href="/agents" className="font-semibold text-primary">🤖 AI Agents</a>
         </nav>
       </div>
     </header>
