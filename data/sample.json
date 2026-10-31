@@ -1,8 +1,1 @@
-
-{
-  "articles": [
-    { "title": "Lakers Rally Past Celtics", "summary": "LeBron James leads a 4th quarter comeback.", "category": "basketball" },
-    { "title": "Yankees Clinch Division", "summary": "Strong pitching seals the AL East title.", "category": "baseball" },
-    { "title": "Messi Scores Twice", "summary": "Inter Miami tops standings after a 3-1 win.", "category": "soccer" }
-  ]
-}
+{"articles":[{"category":"basketball","summary":"LeBron James leads a 4th quarter comeback.","title":"Lakers Rally Past Celtics"},{"category":"baseball","summary":"Strong pitching seals the AL East title.","title":"Yankees Clinch Division"},{"category":"soccer","summary":"Inter Miami tops standings after a 3-1 win.","title":"Messi Scores Twice"},{"category":"basketball","summary":"A historic first night sends the arena into a frenzy.","title":"Rookie Drops 40 in Debut"},{"category":"baseball","summary":"Bottom of the ninth heroics cap an instant classic.","title":"Walk-Off Grand Slam Stuns Crowd"},{"category":"soccer","summary":"A 94th-minute strike decides a heated rivalry.","title":"Stoppage-Time Winner Seals Derby"}]}

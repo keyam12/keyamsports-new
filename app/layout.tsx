@@ -2,6 +2,7 @@
 import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import BreakingTicker from "../components/BreakingTicker";
 
 export const metadata = {
   title: "KEYAM SPORTS",
@@ -13,7 +14,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-1 max-w-6xl mx-auto p-6">{children}</main>
+        <BreakingTicker />
+        <main className="flex-1 max-w-6xl mx-auto p-6 w-full">{children}</main>
         <Footer />
       </body>
     </html>
