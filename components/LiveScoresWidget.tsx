@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 export default function LiveScoresWidget() {
   const [games, setGames] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [live, setLive] = useState(false);
 
   async function loadScores() {
     try {
       const res = await fetch('/api/live-scores');
       const data = await res.json();
       setGames(data.results || []);
+      setLive(!!data.live);
     } catch (err) {
       console.error(err);
     } finally {
@@ -37,8 +39,16 @@ export default function LiveScoresWidget() {
 
   return (
     <div className="border rounded p-4 bg-white">
-      <h4 className="font-bold mb-1">Scores <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 align-middle">DEMO</span></h4>
-      <p className="text-xs text-gray-500 mb-3">Sample data — connect a live scores API for real games.</p>
+      <h4 className="font-bold mb-1">Scores{" "}
+        {live ? (
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 align-middle">● LIVE</span>
+        ) : (
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 align-middle">DEMO</span>
+        )}
+      </h4>
+      {!live && (
+        <p className="text-xs text-gray-500 mb-3">Sample data — live API unreachable right now.</p>
+      )}
       <div className="space-y-4">
         {games.map((g, i) => (
           <div
