@@ -7,7 +7,7 @@ import { rateLimit, clientIp } from "../../../lib/rateLimit";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const rl = rateLimit(`agents:${clientIp(req)}`, 10, 60_000);
+  const rl = await rateLimit(`agents:${clientIp(req)}`, 10, 60_000);
   if (!rl.ok) {
     return new Response("Too many requests — slow down.", {
       status: 429,
