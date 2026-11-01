@@ -1,6 +1,6 @@
 // 📊 Stats — digs up the one number that tells the story.
 import type { EmitFn, RunContext } from "./types";
-import { complete, hasApiKey, sleep } from "./llm";
+import { completeFor, hasApiKey, sleep } from "./llm";
 
 export async function runStats(
   ctx: Pick<RunContext, "topic" | "findings">,
@@ -11,7 +11,7 @@ export async function runStats(
 
   if (hasApiKey()) {
     emit({ type: "agent_log", agent: "stats", message: "Finding the key stat with AI…" });
-    const stats = await complete(
+    const stats = await completeFor("stats",
       `Give ONE striking stat highlight (one sentence, with a number) for this sports storyline: ${ctx.topic}.\nContext: ${ctx.findings}`
     );
     emit({ type: "agent_done", agent: "stats", message: "Key stat found." });

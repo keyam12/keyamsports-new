@@ -1,6 +1,6 @@
 // ✍️ Writer — turns the scout's findings into a punchy recap.
 import type { EmitFn, RunContext } from "./types";
-import { complete, hasApiKey, sleep } from "./llm";
+import { completeFor, hasApiKey, sleep } from "./llm";
 
 export async function runWriter(
   ctx: Pick<RunContext, "topic" | "findings">,
@@ -11,7 +11,7 @@ export async function runWriter(
 
   if (hasApiKey()) {
     emit({ type: "agent_log", agent: "writer", message: "Writing with AI…" });
-    const recap = await complete(
+    const recap = await completeFor("writer",
       `Write a punchy 2-paragraph sports recap for KEYAM SPORTS about: ${ctx.topic}.\nContext: ${ctx.findings}\nKeep it energetic and under 120 words.`
     );
     emit({ type: "agent_done", agent: "writer", message: "Recap written." });

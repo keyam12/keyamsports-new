@@ -1,6 +1,6 @@
 // 📰 Editor — assembles the final KEYAM SPORTS article.
 import type { EmitFn, RunContext } from "./types";
-import { complete, hasApiKey, sleep } from "./llm";
+import { completeFor, hasApiKey, sleep } from "./llm";
 
 export async function runEditor(
   ctx: Pick<RunContext, "topic" | "recap" | "stats" | "demo">,
@@ -19,7 +19,7 @@ export async function runEditor(
   let headline: string;
   if (hasApiKey()) {
     emit({ type: "agent_log", agent: "editor", message: "Writing the headline with AI…" });
-    headline = await complete(
+    headline = await completeFor("editor",
       `Write ONE punchy sports headline (max 10 words) for: ${ctx.topic}. No quotes, no emoji.`
     );
   } else {
@@ -27,7 +27,7 @@ export async function runEditor(
   }
 
   const demoNote = ctx.demo
-    ? `\n\n_🤖 Demo mode — add OPENAI_API_KEY to generate real AI content._`
+    ? `\n\n⚠️ DEMO MODE — this is simulated content, not real news. Add OPENAI_API_KEY to generate real AI content.`
     : "";
 
   const article =

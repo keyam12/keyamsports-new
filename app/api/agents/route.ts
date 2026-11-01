@@ -1,10 +1,20 @@
 // GET /api/agents — runs the agent crew and streams live progress
 // as Server-Sent Events (agent_started, agent_log, agent_done, run_done).
+// Rate limited: 10 runs per minute per IP (each run costs OpenAI tokens).
 import { runCrew } from "../../../agents/AgentRunner";
+import { rateLimit, clientIp } from "../../../lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const rl = rateLimit(`agents:${clientIp(req)}`, 10, 60_000);
+  if (!rl.ok) {
+    return new Response("Too many requests — slow down.", {
+      status: 429,
+      headers: { "Retry-After": String(rl.retryAfter) },
+    });
+  }
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({

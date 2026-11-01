@@ -246,7 +246,12 @@ export default function AgentsPage() {
       {/* Final article with typewriter */}
       {article && (
         <section className="animate-fade-up">
-          <h2 className="text-2xl font-bold mb-3">📰 Final Article</h2>
+          <div className="flex items-center gap-3 mb-3">
+            <h2 className="text-2xl font-bold">📰 Final Article</h2>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
+              🤖 AI-generated
+            </span>
+          </div>
           <div className="bg-white rounded-2xl border p-6 shadow-sm whitespace-pre-wrap leading-relaxed">
             {typed}
             {typed.length < article.length && <span className="animate-blink text-primary">▊</span>}

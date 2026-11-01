@@ -37,7 +37,8 @@ export default function LiveScoresWidget() {
 
   return (
     <div className="border rounded p-4 bg-white">
-      <h4 className="font-bold mb-3">Live Scores (TheSportsDB)</h4>
+      <h4 className="font-bold mb-1">Scores <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 align-middle">DEMO</span></h4>
+      <p className="text-xs text-gray-500 mb-3">Sample data — connect a live scores API for real games.</p>
       <div className="space-y-4">
         {games.map((g, i) => (
           <div

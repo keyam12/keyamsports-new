@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import { rateLimit, clientIp } from "../../../lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,14 @@ function getClient(): OpenAI {
   return new OpenAI({ apiKey });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const rl = rateLimit(`run-agent:${clientIp(req)}`, 10, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { ok: false, error: "Too many requests — slow down." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+    );
+  }
   try {
     const client = getClient();
     const prompt = `

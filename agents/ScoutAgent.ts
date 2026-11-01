@@ -1,6 +1,6 @@
 // 🔭 Scout — the eyes of the crew. Finds today's top sports storyline.
 import type { EmitFn, RunContext } from "./types";
-import { complete, hasApiKey, sleep } from "./llm";
+import { completeFor, hasApiKey, sleep } from "./llm";
 
 const DEMO_STORYLINES = [
   {
@@ -33,7 +33,7 @@ export async function runScout(
 
   if (hasApiKey()) {
     emit({ type: "agent_log", agent: "scout", message: "Asking AI for today's top storyline…" });
-    const raw = await complete(
+    const raw = await completeFor("scout",
       "What is the single biggest sports storyline today? Reply with one short topic line, then 2-3 sentences of findings. Format exactly:\nTOPIC: ...\nFINDINGS: ..."
     );
     const topic = raw.match(/TOPIC:\s*(.+)/)?.[1]?.trim() || "Today's Top Story";

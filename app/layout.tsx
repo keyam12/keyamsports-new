@@ -6,7 +6,18 @@ import BreakingTicker from "../components/BreakingTicker";
 
 export const metadata = {
   title: "KEYAM SPORTS",
-  description: "24/7 AI — Never Miss Anything ⚡️"
+  description: "24/7 AI — Never Miss Anything ⚡️",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://keyam-sports.vercel.app"),
+  openGraph: {
+    title: "KEYAM SPORTS",
+    description: "24/7 AI — Never Miss Anything ⚡️",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KEYAM SPORTS",
+    description: "24/7 AI — Never Miss Anything ⚡️",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
