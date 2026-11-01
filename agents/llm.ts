@@ -20,8 +20,17 @@ const MODEL_DEFAULTS: Record<AgentId, string> = {
   editor: process.env.KEYAM_MODEL_EDITOR || "gpt-6-luna",
 };
 
+// The key may be stored under any of these names in Vercel env vars.
+function apiKey(): string | undefined {
+  return (
+    process.env.OPENAI_API_KEY ||
+    process.env.KEYAMSPORTS_MUSE ||
+    process.env.KEYAMSPORTS_MUSES
+  );
+}
+
 export function hasApiKey(): boolean {
-  return !!process.env.OPENAI_API_KEY;
+  return !!apiKey();
 }
 
 /** Which model a given agent runs on (useful for logging / UI). */
@@ -30,11 +39,15 @@ export function modelFor(agent: AgentId): string {
 }
 
 function getClient(): OpenAI {
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey =
+    process.env.OPENAI_API_KEY ||
+    process.env.KEYAMSPORTS_MUSE ||
+    process.env.KEYAMSPORTS_MUSES;
+  if (!apiKey) {
     throw new Error("OPENAI_API_KEY not set");
   }
   if (!client) {
-    client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    client = new OpenAI({ apiKey });
   }
   return client;
 }

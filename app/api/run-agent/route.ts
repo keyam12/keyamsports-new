@@ -5,7 +5,10 @@ import { rateLimit, clientIp } from "../../../lib/rateLimit";
 export const dynamic = "force-dynamic";
 
 function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey =
+    process.env.OPENAI_API_KEY ||
+    process.env.KEYAMSPORTS_MUSE ||
+    process.env.KEYAMSPORTS_MUSES;
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
