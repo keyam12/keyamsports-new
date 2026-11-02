@@ -1,4 +1,5 @@
 import NewsCard from '../../components/NewsCard';
+import AdSlot from '../../components/AdSlot';
 import sample from '../../data/sample.json';
 
 export default function Basketball() {
@@ -10,7 +11,9 @@ export default function Basketball() {
         <p className="opacity-90">Hoops headlines, powered by AI</p>
       </div>
       <div className="space-y-4">
-        {filtered.map((a: any, i: number) => (<NewsCard key={i} article={a} />))}
+        {filtered.slice(0, 2).map((a: any, i: number) => (<NewsCard key={i} article={a} />))}
+        <AdSlot slot="" format="infeed" label="In-feed · category" />
+        {filtered.slice(2).map((a: any, i: number) => (<NewsCard key={i + 2} article={a} />))}
       </div>
     </div>
   );

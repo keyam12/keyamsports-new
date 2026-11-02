@@ -5,6 +5,7 @@ export default function Footer() {
         <span>© {new Date().getFullYear()} KEYAM SPORTS — 24/7 AI — Never Miss Anything ⚡️</span>
         <nav className="flex gap-4 ml-auto">
           <a href="/about" className="hover:text-primary transition">About</a>
+          <a href="/contact" className="hover:text-primary transition">Contact</a>
           <a href="/privacy" className="hover:text-primary transition">Privacy</a>
           <a href="/terms" className="hover:text-primary transition">Terms</a>
         </nav>

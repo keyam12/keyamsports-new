@@ -3,37 +3,51 @@
     {
       "category": "baseball",
       "title": "MLB Pitch-Rigging Trial Opens as Baseball Faces Integrity Test",
-      "summary": "The federal trial of Guardians pitchers Emmanuel Clase and Luis Ortiz began Monday in Brooklyn, with both accused of rigging pitches as part of a betting scheme. A major MLB storyline moves from the diamond to the courtroom."
+      "summary": "The federal trial of Guardians pitchers Emmanuel Clase and Luis Ortiz began Monday in Brooklyn, with both accused of rigging pitches as part of a betting scheme. A major MLB storyline moves from the diamond to the courtroom.",
+      "date": "2026-11-02",
+      "ai": true
     },
     {
       "category": "basketball",
       "summary": "LeBron James leads a 4th quarter comeback.",
-      "title": "Lakers Rally Past Celtics"
+      "title": "Lakers Rally Past Celtics",
+      "date": "2026-11-01",
+      "ai": false
     },
     {
       "category": "baseball",
       "summary": "Strong pitching seals the AL East title.",
-      "title": "Yankees Clinch Division"
+      "title": "Yankees Clinch Division",
+      "date": "2026-11-01",
+      "ai": false
     },
     {
       "category": "soccer",
       "summary": "Inter Miami tops standings after a 3-1 win.",
-      "title": "Messi Scores Twice"
+      "title": "Messi Scores Twice",
+      "date": "2026-10-31",
+      "ai": false
     },
     {
       "category": "basketball",
       "summary": "A historic first night sends the arena into a frenzy.",
-      "title": "Rookie Drops 40 in Debut"
+      "title": "Rookie Drops 40 in Debut",
+      "date": "2026-10-31",
+      "ai": false
     },
     {
       "category": "baseball",
       "summary": "Bottom of the ninth heroics cap an instant classic.",
-      "title": "Walk-Off Grand Slam Stuns Crowd"
+      "title": "Walk-Off Grand Slam Stuns Crowd",
+      "date": "2026-10-30",
+      "ai": false
     },
     {
       "category": "soccer",
       "summary": "A 94th-minute strike decides a heated rivalry.",
-      "title": "Stoppage-Time Winner Seals Derby"
+      "title": "Stoppage-Time Winner Seals Derby",
+      "date": "2026-10-30",
+      "ai": false
     }
   ]
 }
