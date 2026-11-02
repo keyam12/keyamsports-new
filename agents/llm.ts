@@ -57,13 +57,14 @@ export async function completeFor(
   prompt: string,
   system?: string
 ): Promise<string> {
+  // NOTE: no temperature override — some models (e.g. gpt-6-luna)
+  // only support the default value of 1.
   const res = await getClient().chat.completions.create({
     model: modelFor(agent),
     messages: [
       ...(system ? [{ role: "system" as const, content: system }] : []),
       { role: "user" as const, content: prompt },
     ],
-    temperature: 0.8,
   });
   return res.choices[0]?.message?.content?.trim() || "";
 }
