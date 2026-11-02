@@ -1,1 +1,39 @@
-{"articles":[{"category":"basketball","summary":"LeBron James leads a 4th quarter comeback.","title":"Lakers Rally Past Celtics"},{"category":"baseball","summary":"Strong pitching seals the AL East title.","title":"Yankees Clinch Division"},{"category":"soccer","summary":"Inter Miami tops standings after a 3-1 win.","title":"Messi Scores Twice"},{"category":"basketball","summary":"A historic first night sends the arena into a frenzy.","title":"Rookie Drops 40 in Debut"},{"category":"baseball","summary":"Bottom of the ninth heroics cap an instant classic.","title":"Walk-Off Grand Slam Stuns Crowd"},{"category":"soccer","summary":"A 94th-minute strike decides a heated rivalry.","title":"Stoppage-Time Winner Seals Derby"}]}
+{
+  "articles": [
+    {
+      "category": "baseball",
+      "title": "MLB Pitch-Rigging Trial Opens as Baseball Faces Integrity Test",
+      "summary": "The federal trial of Guardians pitchers Emmanuel Clase and Luis Ortiz began Monday in Brooklyn, with both accused of rigging pitches as part of a betting scheme. A major MLB storyline moves from the diamond to the courtroom."
+    },
+    {
+      "category": "basketball",
+      "summary": "LeBron James leads a 4th quarter comeback.",
+      "title": "Lakers Rally Past Celtics"
+    },
+    {
+      "category": "baseball",
+      "summary": "Strong pitching seals the AL East title.",
+      "title": "Yankees Clinch Division"
+    },
+    {
+      "category": "soccer",
+      "summary": "Inter Miami tops standings after a 3-1 win.",
+      "title": "Messi Scores Twice"
+    },
+    {
+      "category": "basketball",
+      "summary": "A historic first night sends the arena into a frenzy.",
+      "title": "Rookie Drops 40 in Debut"
+    },
+    {
+      "category": "baseball",
+      "summary": "Bottom of the ninth heroics cap an instant classic.",
+      "title": "Walk-Off Grand Slam Stuns Crowd"
+    },
+    {
+      "category": "soccer",
+      "summary": "A 94th-minute strike decides a heated rivalry.",
+      "title": "Stoppage-Time Winner Seals Derby"
+    }
+  ]
+}
