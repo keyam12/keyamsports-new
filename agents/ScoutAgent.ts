@@ -1,6 +1,7 @@
 // 🔭 Scout — the eyes of the crew. Finds today's top sports storyline.
 import type { EmitFn, RunContext } from "./types";
 import { completeFor, hasApiKey, sleep } from "./llm";
+import { getHeadlines, formatHeadlines } from "../lib/headlines";
 
 const DEMO_STORYLINES = [
   {
@@ -32,10 +33,20 @@ export async function runScout(
   await sleep(900);
 
   if (hasApiKey()) {
-    emit({ type: "agent_log", agent: "scout", message: "Asking AI for today's top storyline…" });
-    const raw = await completeFor("scout",
-      "What is the single biggest sports storyline today? Reply with one short topic line, then 2-3 sentences of findings. Format exactly:\nTOPIC: ...\nFINDINGS: ..."
-    );
+    emit({ type: "agent_log", agent: "scout", message: "Fetching today's real sports headlines…" });
+    const headlines = await getHeadlines();
+    let prompt: string;
+    if (headlines.length > 0) {
+      emit({ type: "agent_log", agent: "scout", message: `Found ${headlines.length} real headlines. Asking AI to pick the top storyline…` });
+      prompt =
+        "Below are TODAY'S REAL sports headlines from ESPN. Pick the single biggest storyline FROM THIS LIST ONLY — do not invent stories, scores, or events not listed here. Reply with one short topic line, then 2-3 sentences of findings based on the headline(s) you picked. Format exactly:\nTOPIC: ...\nFINDINGS: ...\n\nHEADLINES:\n" +
+        formatHeadlines(headlines);
+    } else {
+      emit({ type: "agent_log", agent: "scout", message: "Headline feed unreachable — asking AI for today's top storyline…" });
+      prompt =
+        "What is the single biggest sports storyline today? Reply with one short topic line, then 2-3 sentences of findings. Format exactly:\nTOPIC: ...\nFINDINGS: ...";
+    }
+    const raw = await completeFor("scout", prompt);
     const topic = raw.match(/TOPIC:\s*(.+)/)?.[1]?.trim() || "Today's Top Story";
     const findings = raw.match(/FINDINGS:\s*([\s\S]+)/)?.[1]?.trim() || raw;
     emit({ type: "agent_log", agent: "scout", message: `Picked storyline: ${topic}` });
