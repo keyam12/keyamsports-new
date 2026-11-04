@@ -8,7 +8,8 @@ import { runEditor } from "./EditorAgent";
 import { hasApiKey } from "./llm";
 
 export async function runCrew(
-  emitRaw: (event: AgentEvent) => void
+  emitRaw: (event: AgentEvent) => void,
+  opts?: { excludeTopics?: string[] }
 ): Promise<RunContext> {
   const emit: EmitFn = (e) => emitRaw({ ...e, at: new Date().toISOString() });
   const demo = !hasApiKey();
@@ -34,7 +35,7 @@ export async function runCrew(
 
   // 1. Scout finds the storyline
   await wrap("scout", async () => {
-    const { topic, findings } = await runScout(emit);
+    const { topic, findings } = await runScout(emit, opts);
     ctx.topic = topic;
     ctx.findings = findings;
   });

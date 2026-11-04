@@ -15,6 +15,15 @@ export async function GET(req: Request) {
     });
   }
 
+  // Optional topic dedup: ?exclude=topic1|topic2 — topics the Scout must not
+  // pick again (e.g. recent drafts already delivered to the user).
+  const excludeParam = new URL(req.url).searchParams.get("exclude") ?? "";
+  const excludeTopics = excludeParam
+    .split("|")
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 10);
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -23,7 +32,7 @@ export async function GET(req: Request) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
       };
       try {
-        await runCrew((e) => send({ ...e }));
+        await runCrew((e) => send({ ...e }), { excludeTopics });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         send({
