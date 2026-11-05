@@ -2,7 +2,7 @@
 import type { EmitFn, RunContext } from "./types";
 import { completeFor, hasApiKey, sleep } from "./llm";
 import { getHeadlines, formatHeadlines } from "../lib/headlines";
-import { getRecentTopics } from "../lib/recentCoverage";
+import { getRecentTopics, formatCoveredTopics } from "../lib/recentCoverage";
 
 const DEMO_STORYLINES = [
   {
@@ -47,8 +47,8 @@ export async function runScout(
   ];
   const coveredBlock =
     covered.length > 0
-      ? "\n\nIMPORTANT — already covered recently, do NOT pick these again. Choose the next-biggest DIFFERENT storyline:\n" +
-        covered.map((t) => `- ${t}`).join("\n")
+      ? "\n\nIMPORTANT — already covered recently, do NOT pick these again. Choose the next-biggest DIFFERENT storyline. A headline is the SAME story if it shares 2 or more keywords with any blocked topic below — even if the wording is different. One shared word alone (e.g. only a team name) does not count.\n" +
+        formatCoveredTopics(covered)
       : "";
 
   if (hasApiKey()) {
