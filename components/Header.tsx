@@ -9,6 +9,7 @@ export default function Header() {
           <a href="/basketball" className="hover:text-primary transition">Basketball</a>
           <a href="/baseball" className="hover:text-primary transition">Baseball</a>
           <a href="/soccer" className="hover:text-primary transition">Soccer</a>
+          <a href="/odds" className="hover:text-primary transition">🎲 Odds</a>
           <a href="/agents" className="font-semibold text-primary hover:opacity-80 transition">🤖 AI Agents</a>
         </nav>
       </div>
