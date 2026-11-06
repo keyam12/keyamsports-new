@@ -18,6 +18,8 @@ const MODEL_DEFAULTS: Record<AgentId, string> = {
   writer: process.env.KEYAM_MODEL_WRITER || "gpt-6.1-sol",
   stats: process.env.KEYAM_MODEL_STATS || "gpt-6-luna",
   editor: process.env.KEYAM_MODEL_EDITOR || "gpt-6-luna",
+  senior_editor: process.env.KEYAM_MODEL_SENIOR_EDITOR || "gpt-6-luna",
+  injury: process.env.KEYAM_MODEL_INJURY || "gpt-6-luna",
 };
 
 // The key may be stored under any of these names in Vercel env vars.

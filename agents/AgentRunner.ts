@@ -1,11 +1,16 @@
 // Orchestrator: runs the independent agents as a crew.
-// Scout goes first; Writer and Stats run in parallel; Editor finishes.
+// Four Scouts (one per sport) report in parallel; the Senior Editor picks
+// the front-page storyline; Writer and Stats run in parallel; Editor
+// assembles the article; the Senior Editor does the final fact-check.
 import type { AgentEvent, AgentId, EmitFn, RunContext } from "./types";
 import { runScout } from "./ScoutAgent";
 import { runWriter } from "./WriterAgent";
 import { runStats } from "./StatsAgent";
 import { runEditor } from "./EditorAgent";
+import { pickTopStoryline, reviewArticle, type StorylineCandidate } from "./SeniorEditorAgent";
 import { hasApiKey } from "./llm";
+
+const SCOUT_SPORTS = ["NBA", "NFL", "MLB", "Soccer"];
 
 export async function runCrew(
   emitRaw: (event: AgentEvent) => void,
@@ -33,14 +38,28 @@ export async function runCrew(
     }
   };
 
-  // 1. Scout finds the storyline
-  await wrap("scout", async () => {
-    const { topic, findings } = await runScout(emit, opts);
+  // 1. Four Scouts (one per sport) search in parallel
+  const candidates: StorylineCandidate[] = [];
+  await Promise.all(
+    SCOUT_SPORTS.map((sport) =>
+      wrap("scout", async () => {
+        const { topic, findings } = await runScout(emit, {
+          ...opts,
+          sport,
+        });
+        candidates.push({ sport, topic, findings });
+      })
+    )
+  );
+
+  // 2. Senior Editor picks the front-page storyline
+  await wrap("senior_editor", async () => {
+    const { topic, findings } = await pickTopStoryline(candidates, emit);
     ctx.topic = topic;
     ctx.findings = findings;
   });
 
-  // 2. Writer and Stats work in parallel
+  // 3. Writer and Stats work in parallel
   await Promise.all([
     wrap("writer", async () => {
       ctx.recap = await runWriter(ctx, emit);
@@ -50,10 +69,16 @@ export async function runCrew(
     }),
   ]);
 
-  // 3. Editor assembles the final article
+  // 4. Editor assembles the final article
   await wrap("editor", async () => {
     ctx.article = await runEditor(ctx, emit);
   });
+
+  // 5. Senior Editor: final fact-check (fail-open — never kills the run)
+  const review = await reviewArticle(ctx, emit);
+  ctx.article = review.article;
+  ctx.seniorEditorVerdict = review.verdict;
+  ctx.seniorEditorNotes = review.notes;
 
   emit({ type: "run_done", message: "All agents finished. Article ready.", payload: ctx });
   return ctx;

@@ -39,9 +39,11 @@ async function fetchFeed(sport: string, url: string, timeoutMs = 7000): Promise<
   }
 }
 
-/** Returns today's real sports headlines across leagues (empty array on failure). */
-export async function getHeadlines(): Promise<Headline[]> {
-  const results = await Promise.all(FEEDS.map((f) => fetchFeed(f.sport, f.url)));
+/** Returns today's real sports headlines across leagues (empty array on failure).
+ *  Pass a sport (NBA, NFL, MLB, Soccer) to fetch only that league's feed. */
+export async function getHeadlines(sport?: string): Promise<Headline[]> {
+  const feeds = sport ? FEEDS.filter((f) => f.sport === sport) : FEEDS;
+  const results = await Promise.all(feeds.map((f) => fetchFeed(f.sport, f.url)));
   return results.flat();
 }
 

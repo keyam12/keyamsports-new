@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AGENT_META } from '../../agents/types';
 import type { AgentEvent, AgentId, AgentStatus } from '../../agents/types';
 
-const ORDER: AgentId[] = ['scout', 'writer', 'stats', 'editor'];
+const ORDER: AgentId[] = ['scout', 'writer', 'stats', 'editor', 'senior_editor'];
 
 const DOT: Record<AgentStatus, string> = {
   idle: 'bg-gray-300',
@@ -31,6 +31,8 @@ const idleStatuses = (): Record<AgentId, AgentStatus> => ({
   writer: 'idle',
   stats: 'idle',
   editor: 'idle',
+  senior_editor: 'idle',
+  injury: 'idle',
 });
 
 interface HistoryItem {
@@ -166,7 +168,7 @@ export default function AgentsPage() {
             </span>
           )}
         </div>
-        <p className="text-lg">Four independent agents. One breaking sports story. Watch them work live.</p>
+        <p className="text-lg">Five agents, one Senior Editor. One breaking sports story. Watch them work live.</p>
         <div className="mt-3 flex items-center justify-center gap-3 text-sm">
           {demo !== null && (
             <span className="inline-block px-3 py-1 rounded-full font-semibold bg-white/20">

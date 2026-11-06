@@ -30,13 +30,15 @@ const DEMO_STORYLINES = [
 export interface ScoutOptions {
   /** Topics covered very recently (e.g. recent chat drafts) — don't pick these again. */
   excludeTopics?: string[];
+  /** Limit the scout to one sport feed (NBA, NFL, MLB, Soccer). Default: all. */
+  sport?: string;
 }
 
 export async function runScout(
   emit: EmitFn,
   opts: ScoutOptions = {}
 ): Promise<Pick<RunContext, "topic" | "findings">> {
-  emit({ type: "agent_started", agent: "scout", message: "Scout is scanning the sports world…" });
+  emit({ type: "agent_started", agent: "scout", message: `Scout is scanning${opts.sport ? ` ${opts.sport}` : " the sports world"}…` });
   await sleep(900);
 
   // Memory of recently covered storylines: the site's own published articles
@@ -52,8 +54,8 @@ export async function runScout(
       : "";
 
   if (hasApiKey()) {
-    emit({ type: "agent_log", agent: "scout", message: "Fetching today's real sports headlines…" });
-    const headlines = await getHeadlines();
+    emit({ type: "agent_log", agent: "scout", message: `Fetching today's real ${opts.sport || "sports"} headlines…` });
+    const headlines = await getHeadlines(opts.sport);
     let prompt: string;
     if (headlines.length > 0) {
       emit({ type: "agent_log", agent: "scout", message: `Found ${headlines.length} real headlines. Asking AI to pick the top storyline…` });

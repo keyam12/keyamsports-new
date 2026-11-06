@@ -1,6 +1,6 @@
 // Shared types for the KEYAM SPORTS independent AI agents.
 
-export type AgentId = "scout" | "writer" | "stats" | "editor";
+export type AgentId = "scout" | "writer" | "stats" | "editor" | "senior_editor" | "injury";
 
 export type AgentStatus = "idle" | "running" | "done" | "failed";
 
@@ -35,6 +35,10 @@ export interface RunContext {
   article: string;
   /** True when no OPENAI_API_KEY is set — agents use demo content */
   demo: boolean;
+  /** Senior Editor's final verdict: APPROVED or NEEDS_FIXES */
+  seniorEditorVerdict?: string;
+  /** Notes from the Senior Editor's review (fixes applied, if any) */
+  seniorEditorNotes?: string[];
 }
 
 export interface AgentMeta {
@@ -49,4 +53,6 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
   writer: { id: "writer", name: "Writer", role: "Writes the recap", emoji: "✍️" },
   stats: { id: "stats", name: "Stats", role: "Digs up the key numbers", emoji: "📊" },
   editor: { id: "editor", name: "Editor", role: "Assembles the final article", emoji: "📰" },
+  senior_editor: { id: "senior_editor", name: "Senior Editor", role: "Runs the newsroom — picks the story, final quality gate", emoji: "👔" },
+  injury: { id: "injury", name: "Injury Report", role: "Tracks injuries across all sports", emoji: "🚑" },
 };
