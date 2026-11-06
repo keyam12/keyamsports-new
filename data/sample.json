@@ -1,6 +1,34 @@
 {
   "articles": [
     {
+      "category": "soccer",
+      "title": "Ronaldo Announces International Retirement After Rift With Coach Jorge Jesus",
+      "summary": "Cristiano Ronaldo announced his retirement from Portugal duty, effective after the November international break, following a fallout with coach Jorge Jesus. He leaves with 234 caps and 146 goals — both men's international records — and continues his club career at Al-Nassr.",
+      "date": "2026-11-05",
+      "ai": true
+    },
+    {
+      "category": "basketball",
+      "title": "Wembanyama Explodes for Career-High 52 in Spurs' 112-111 Win Over Mavericks",
+      "summary": "Victor Wembanyama poured in a career-high 52 points with 24 rebounds and 8 blocks, hitting the game-winning free throw with 24.2 seconds left as the Spurs edged the Mavericks 112-111 for their sixth straight win.",
+      "date": "2026-11-05",
+      "ai": true
+    },
+    {
+      "category": "baseball",
+      "title": "Bo Naylor Testifies He Saw Nothing Unusual in Clase-Ortiz Pitch Case",
+      "summary": "Former Guardians catcher Bo Naylor testified Thursday in Brooklyn that he noticed nothing unusual about pitches from Emmanuel Clase or Luis Ortiz, who are accused of rigging pitches. Under cross-examination he said he didn't know gamblers could bet on individual pitches until the case arose.",
+      "date": "2026-11-06",
+      "ai": true
+    },
+    {
+      "category": "football",
+      "title": "Jaguars Rout Shorthanded Ravens 33-10 in Dominant Display",
+      "summary": "The Jaguars crushed the short-handed Ravens 33-10 for their fifth win in six games. Trevor Lawrence threw for 242 yards and a touchdown, Cam Little kicked four field goals, and Jacksonville's defense forced three turnovers while holding Derrick Henry to 57 yards.",
+      "date": "2026-11-06",
+      "ai": true
+    },
+    {
       "category": "baseball",
       "title": "MLB Pitch-Rigging Trial Opens as Baseball Faces Integrity Test",
       "summary": "The federal trial of Guardians pitchers Emmanuel Clase and Luis Ortiz began Monday in Brooklyn, with both accused of rigging pitches as part of a betting scheme. A major MLB storyline moves from the diamond to the courtroom.",

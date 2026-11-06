@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 const SPORTS = [
   { id: 'basketball', label: '🏀 Basketball' },
+  { id: 'football', label: '🏈 Football' },
   { id: 'baseball', label: '⚾ Baseball' },
   { id: 'soccer', label: '⚽ Soccer' },
 ];

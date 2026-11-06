@@ -4,8 +4,7 @@ import LiveScoresWidget from '../components/LiveScoresWidget';
 import OddsWidget from '../components/OddsWidget';
 import FavoritesBar from '../components/FavoritesBar';
 import AdSlot from '../components/AdSlot';
-import sample from '../data/sample.json';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const ADSLOT = (name: string) =>
   (process.env as Record<string, string | undefined>)[`NEXT_PUBLIC_ADSLOT_${name}`] || '';
@@ -15,7 +14,18 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [query, setQuery] = useState('');
-  const allArticles = sample.articles as any[];
+  const [allArticles, setAllArticles] = useState<any[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+
+  // Articles come from /api/articles (Supabase when configured, otherwise
+  // the built-in list) so admin-published notes appear without a deploy.
+  useEffect(() => {
+    fetch('/api/articles')
+      .then((r) => r.json())
+      .then((d) => setAllArticles(d.articles || []))
+      .catch(() => setAllArticles([]))
+      .finally(() => setFeedLoading(false));
+  }, []);
   const articles = allArticles.filter((a) => {
     const favOk = favorites.length === 0 || favorites.includes(a.category);
     const q = query.trim().toLowerCase();
@@ -69,9 +79,11 @@ export default function Home() {
             <h2 className="text-2xl font-bold">Latest Headlines</h2>
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Updated 24/7 by AI</span>
           </div>
-          {articles.length === 0 && (
+          {feedLoading ? (
+            <p className="text-gray-500 bg-white border rounded-2xl p-5">Loading headlines…</p>
+          ) : articles.length === 0 ? (
             <p className="text-gray-500 bg-white border rounded-2xl p-5">No headlines match your filters.</p>
-          )}
+          ) : null}
           <div className="space-y-4">
             {featured && <NewsCard article={featured} featured />}
             {rest.slice(0, 2).map((a: any, i: number) => (

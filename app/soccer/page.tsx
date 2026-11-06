@@ -1,9 +1,10 @@
 import NewsCard from '../../components/NewsCard';
 import AdSlot from '../../components/AdSlot';
-import sample from '../../data/sample.json';
+import { getPublishedArticles } from '../../lib/articles';
 
-export default function Soccer() {
-  const filtered = sample.articles.filter((a: any) => a.category === 'soccer');
+export default async function Soccer() {
+  const articles = await getPublishedArticles();
+  const filtered = articles.filter((a: any) => a.category === 'soccer');
   return (
     <div>
       <div className="bg-gradient-to-r from-green-600 to-emerald-800 text-white p-8 rounded-2xl shadow-lg mb-6">

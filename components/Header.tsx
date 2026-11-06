@@ -7,10 +7,12 @@ export default function Header() {
         <nav className="flex gap-4 ml-4 text-sm">
           <a href="/" className="font-semibold hover:text-primary transition">Home</a>
           <a href="/basketball" className="hover:text-primary transition">Basketball</a>
+          <a href="/football" className="hover:text-primary transition">Football</a>
           <a href="/baseball" className="hover:text-primary transition">Baseball</a>
           <a href="/soccer" className="hover:text-primary transition">Soccer</a>
           <a href="/odds" className="hover:text-primary transition">🎲 Odds</a>
           <a href="/agents" className="font-semibold text-primary hover:opacity-80 transition">🤖 AI Agents</a>
+          <a href="/admin" className="hover:text-primary transition">🔐 Admin</a>
         </nav>
       </div>
     </header>
