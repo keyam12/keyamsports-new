@@ -3,8 +3,7 @@ export const metadata = {
   description: "Get in touch with the KEYAM SPORTS newsroom.",
 };
 
-// TODO: replace with Kevin's real contact email before the AdSense review.
-const CONTACT_EMAIL = "contact@keyamsports.com";
+const CONTACT_EMAIL = "keyamsports@outlook.com";
 
 export default function Contact() {
   return (
