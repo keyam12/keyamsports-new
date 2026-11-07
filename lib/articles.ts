@@ -16,6 +16,7 @@ export interface Article {
   date: string;
   ai: boolean;
   status: ArticleStatus;
+  sources?: string[];
   created_at?: string;
 }
 
@@ -30,6 +31,7 @@ function fromSample(): Article[] {
     date: String(a.date),
     ai: !!a.ai,
     status: "published" as ArticleStatus,
+    sources: Array.isArray(a.sources) ? a.sources.map(String) : undefined,
   }));
 }
 
@@ -42,6 +44,7 @@ function fromRow(r: any): Article {
     date: String(r.date || r.created_at || "").slice(0, 10),
     ai: !!r.ai,
     status: (r.status as ArticleStatus) || "draft",
+    sources: Array.isArray(r.sources) ? r.sources.map(String) : undefined,
     created_at: String(r.created_at || ""),
   };
 }

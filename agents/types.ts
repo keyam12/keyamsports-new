@@ -33,6 +33,8 @@ export interface RunContext {
   stats: string;
   /** Final article assembled by the editor */
   article: string;
+  /** Source URLs behind the chosen storyline (from the Scout) */
+  sources?: string[];
   /** True when no OPENAI_API_KEY is set — agents use demo content */
   demo: boolean;
   /** Senior Editor's final verdict: APPROVED or NEEDS_FIXES */

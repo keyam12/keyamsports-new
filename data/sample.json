@@ -5,28 +5,42 @@
       "title": "Ronaldo Announces International Retirement After Rift With Coach Jorge Jesus",
       "summary": "Cristiano Ronaldo announced his retirement from Portugal duty, effective after the November international break, following a fallout with coach Jorge Jesus. He leaves with 234 caps and 146 goals — both men's international records — and continues his club career at Al-Nassr.",
       "date": "2026-11-05",
-      "ai": true
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/soccer/ronaldo-exits-portugal-stage-with-records-intact-farewell-clouded-by-rift-2026-11-05/"
+      ]
     },
     {
       "category": "basketball",
       "title": "Wembanyama Explodes for Career-High 52 in Spurs' 112-111 Win Over Mavericks",
       "summary": "Victor Wembanyama poured in a career-high 52 points with 24 rebounds and 8 blocks, hitting the game-winning free throw with 24.2 seconds left as the Spurs edged the Mavericks 112-111 for their sixth straight win.",
       "date": "2026-11-05",
-      "ai": true
+      "ai": true,
+      "sources": [
+        "https://www.aljazeera.com/amp/sports/2026/11/5/wembanyama-pours-in-career-high-52-points-as-spurs-edge-mavericks-112-111",
+        "https://www.thescore.com/nba/news/3645709/wemby-goes-off-for-career-high-52-points-i-can-still-do-more"
+      ]
     },
     {
       "category": "baseball",
       "title": "Bo Naylor Testifies He Saw Nothing Unusual in Clase-Ortiz Pitch Case",
       "summary": "Former Guardians catcher Bo Naylor testified Thursday in Brooklyn that he noticed nothing unusual about pitches from Emmanuel Clase or Luis Ortiz, who are accused of rigging pitches. Under cross-examination he said he didn't know gamblers could bet on individual pitches until the case arose.",
       "date": "2026-11-06",
-      "ai": true
+      "ai": true,
+      "sources": [
+        "https://www.sportsnet.ca/mlb/article/catcher-bo-naylor-testifies-he-didnt-know-gamblers-bet-on-individual-pitches/",
+        "https://www.covers.com/industry/nothing-suspicious-says-ex-guardian-bo-naylor-in-clase-ortiz-hearing-nov-6-2026"
+      ]
     },
     {
       "category": "football",
       "title": "Jaguars Rout Shorthanded Ravens 33-10 in Dominant Display",
       "summary": "The Jaguars crushed the short-handed Ravens 33-10 for their fifth win in six games. Trevor Lawrence threw for 242 yards and a touchdown, Cam Little kicked four field goals, and Jacksonville's defense forced three turnovers while holding Derrick Henry to 57 yards.",
       "date": "2026-11-06",
-      "ai": true
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/nfl/jaguars-limit-quarterback-starved-ravens-227-yards-one-sided-win--flm-2026-11-06/"
+      ]
     },
     {
       "category": "baseball",

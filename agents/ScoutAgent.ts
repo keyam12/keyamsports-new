@@ -37,7 +37,7 @@ export interface ScoutOptions {
 export async function runScout(
   emit: EmitFn,
   opts: ScoutOptions = {}
-): Promise<Pick<RunContext, "topic" | "findings">> {
+): Promise<Pick<RunContext, "topic" | "findings" | "sources">> {
   emit({ type: "agent_started", agent: "scout", message: `Scout is scanning${opts.sport ? ` ${opts.sport}` : " the sports world"}…` });
   await sleep(900);
 
@@ -60,7 +60,7 @@ export async function runScout(
     if (headlines.length > 0) {
       emit({ type: "agent_log", agent: "scout", message: `Found ${headlines.length} real headlines. Asking AI to pick the top storyline…` });
       prompt =
-        "Below are TODAY'S REAL sports headlines from ESPN. Pick the single biggest storyline FROM THIS LIST ONLY — do not invent stories, scores, or events not listed here. Reply with one short topic line, then 2-3 sentences of findings based on the headline(s) you picked. Format exactly:\nTOPIC: ...\nFINDINGS: ...\n\nHEADLINES:\n" +
+        "Below are TODAY'S REAL sports headlines from ESPN. Pick the single biggest storyline FROM THIS LIST ONLY — do not invent stories, scores, or events not listed here. Reply with one short topic line, then 2-3 sentences of findings based on the headline(s) you picked, then the source URLs of the headlines you used (copy them exactly from the Source lines below, one per line, max 3). Format exactly:\nTOPIC: ...\nFINDINGS: ...\nSOURCES: ...\n\nHEADLINES:\n" +
         formatHeadlines(headlines) +
         coveredBlock;
     } else {
@@ -71,10 +71,16 @@ export async function runScout(
     }
     const raw = await completeFor("scout", prompt);
     const topic = raw.match(/TOPIC:\s*(.+)/)?.[1]?.trim() || "Today's Top Story";
-    const findings = raw.match(/FINDINGS:\s*([\s\S]+)/)?.[1]?.trim() || raw;
+    const findings =
+      raw.match(/FINDINGS:\s*([\s\S]*?)(?=SOURCES:|$)/)?.[1]?.trim() || raw;
+    const sources = (raw.match(/SOURCES:\s*([\s\S]+)/)?.[1] || "")
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter((s) => /^https?:\/\//.test(s))
+      .slice(0, 3);
     emit({ type: "agent_log", agent: "scout", message: `Picked storyline: ${topic}` });
     emit({ type: "agent_done", agent: "scout", message: "Storyline locked in." });
-    return { topic, findings };
+    return { topic, findings, sources };
   }
 
   const pick = DEMO_STORYLINES[Math.floor(Math.random() * DEMO_STORYLINES.length)];
@@ -82,5 +88,5 @@ export async function runScout(
   await sleep(700);
   emit({ type: "agent_log", agent: "scout", message: `Picked storyline: ${pick.topic}` });
   emit({ type: "agent_done", agent: "scout", message: "Storyline locked in." });
-  return { topic: pick.topic, findings: pick.findings };
+  return { topic: pick.topic, findings: pick.findings, sources: [] };
 }

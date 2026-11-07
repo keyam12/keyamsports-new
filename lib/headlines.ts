@@ -47,9 +47,10 @@ export async function getHeadlines(sport?: string): Promise<Headline[]> {
   return results.flat();
 }
 
-/** Formats headlines as a numbered list for the Scout's prompt. */
+/** Formats headlines as a numbered list for the Scout's prompt.
+ *  Each headline carries its source URL so the Scout can cite it. */
 export function formatHeadlines(headlines: Headline[]): string {
   return headlines
-    .map((h, i) => `${i + 1}. [${h.sport}] ${h.headline}${h.description ? ` — ${h.description}` : ""}`)
+    .map((h, i) => `${i + 1}. [${h.sport}] ${h.headline}${h.description ? ` — ${h.description}` : ""}${h.link ? `\n   Source: ${h.link}` : ""}`)
     .join("\n");
 }

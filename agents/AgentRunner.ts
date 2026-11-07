@@ -43,20 +43,21 @@ export async function runCrew(
   await Promise.all(
     SCOUT_SPORTS.map((sport) =>
       wrap("scout", async () => {
-        const { topic, findings } = await runScout(emit, {
+        const { topic, findings, sources } = await runScout(emit, {
           ...opts,
           sport,
         });
-        candidates.push({ sport, topic, findings });
+        candidates.push({ sport, topic, findings, sources });
       })
     )
   );
 
   // 2. Senior Editor picks the front-page storyline
   await wrap("senior_editor", async () => {
-    const { topic, findings } = await pickTopStoryline(candidates, emit);
+    const { topic, findings, sources } = await pickTopStoryline(candidates, emit);
     ctx.topic = topic;
     ctx.findings = findings;
+    ctx.sources = sources;
   });
 
   // 3. Writer and Stats work in parallel

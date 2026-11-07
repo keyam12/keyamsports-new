@@ -10,6 +10,15 @@ const CATEGORY_EMOJI: Record<string, string> = {
   soccer: '⚽',
 };
 
+/** Shows a clean domain name (reuters.com) instead of the raw URL. */
+function sourceLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
 export default function NewsCard({ article, featured = false }: { article: any; featured?: boolean }) {
   return (
     <article
@@ -30,6 +39,20 @@ export default function NewsCard({ article, featured = false }: { article: any; 
       </div>
       <h2 className={`font-bold mb-2 leading-snug ${featured ? 'text-2xl' : 'text-xl'}`}>{article.title}</h2>
       <p className={`text-gray-700 ${featured ? 'text-base' : 'text-[15px]'} leading-relaxed`}>{article.summary}</p>
+      {article.sources?.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-xs font-bold text-gray-500 mb-1">🔗 Fuentes</p>
+          <ul className="flex flex-wrap gap-x-3 gap-y-1">
+            {article.sources.map((s: string, i: number) => (
+              <li key={i}>
+                <a href={s} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                  {sourceLabel(s)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </article>
   );
 }

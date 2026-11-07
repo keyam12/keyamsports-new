@@ -3,7 +3,7 @@ import type { EmitFn, RunContext } from "./types";
 import { completeFor, hasApiKey, sleep } from "./llm";
 
 export async function runEditor(
-  ctx: Pick<RunContext, "topic" | "recap" | "stats" | "demo">,
+  ctx: Pick<RunContext, "topic" | "recap" | "stats" | "demo" | "sources">,
   emit: EmitFn
 ): Promise<string> {
   emit({ type: "agent_started", agent: "editor", message: "Editor is assembling the final article…" });
@@ -30,11 +30,17 @@ export async function runEditor(
     ? `\n\n⚠️ DEMO MODE — this is simulated content, not real news. Add OPENAI_API_KEY to generate real AI content.`
     : "";
 
+  const sourcesBlock =
+    ctx.sources && ctx.sources.length > 0
+      ? `\n\n🔗 Fuentes:\n${ctx.sources.map((s) => `- ${s}`).join("\n")}`
+      : "";
+
   const article =
     `🏆 ${headline}\n` +
     `KEYAM SPORTS • ${date}\n\n` +
     `${ctx.recap}\n\n` +
     `📊 Key Stat: ${ctx.stats}` +
+    sourcesBlock +
     demoNote;
 
   await sleep(500);

@@ -14,19 +14,20 @@ export interface StorylineCandidate {
   sport: string;
   topic: string;
   findings: string;
+  sources: string[];
 }
 
 export async function pickTopStoryline(
   candidates: StorylineCandidate[],
   emit: EmitFn
-): Promise<Pick<RunContext, "topic" | "findings">> {
+): Promise<Pick<RunContext, "topic" | "findings" | "sources">> {
   emit({ type: "agent_started", agent: "senior_editor", message: "Senior Editor is weighing the Scouts' storylines…" });
   await sleep(600);
 
   if (!hasApiKey() || candidates.length === 0) {
-    const best = candidates[0] ?? { topic: "Today's Top Story", findings: "" };
+    const best = candidates[0] ?? { topic: "Today's Top Story", findings: "", sources: [] };
     emit({ type: "agent_done", agent: "senior_editor", message: `Picked: ${best.topic}` });
-    return { topic: best.topic, findings: best.findings };
+    return { topic: best.topic, findings: best.findings, sources: best.sources ?? [] };
   }
 
   const list = candidates
@@ -41,7 +42,7 @@ export async function pickTopStoryline(
   const reason = raw.match(/REASON:\s*(.+)/)?.[1]?.trim() || "";
   emit({ type: "agent_log", agent: "senior_editor", message: `Picked [${chosen.sport}] ${chosen.topic}${reason ? ` — ${reason}` : ""}` });
   emit({ type: "agent_done", agent: "senior_editor", message: "Front-page story chosen." });
-  return { topic: chosen.topic, findings: chosen.findings };
+  return { topic: chosen.topic, findings: chosen.findings, sources: chosen.sources ?? [] };
 }
 
 export interface ReviewResult {

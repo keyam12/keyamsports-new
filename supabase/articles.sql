@@ -11,6 +11,7 @@ create table if not exists public.articles (
   date date not null default current_date,
   ai boolean not null default true,
   status text not null default 'draft' check (status in ('draft', 'published')),
+  sources text[] not null default '{}',
   created_at timestamptz not null default now()
 );
 
