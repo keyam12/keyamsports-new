@@ -1,6 +1,61 @@
 {
   "articles": [
     {
+      "category": "basketball",
+      "title": "Man Arrested at LeBron James' Home on Stalking Charges",
+      "summary": "A man was arrested Friday night at LeBron James' Brentwood home on stalking charges after security spotted him on cameras around 9 p.m. and called police. The suspect claimed to be James' son; the LAPD confirmed the arrest to ESPN. James was not home — he was playing in Cleveland — and the suspect did not enter the residence. His identity has not been disclosed.",
+      "date": "2026-11-07",
+      "ai": true,
+      "sources": [
+        "https://nypost.com/2026/11/07/us-news/stalker-arrested-at-lebron-james-la-home/",
+        "https://larrybrownsports.com/basketball/man-arrested-stalking-lebron-james-home/777497"
+      ]
+    },
+    {
+      "category": "basketball",
+      "title": "Bucks' 1-8 Start Faces a Test Against the Celtics",
+      "summary": "The Raptors beat the Bucks 121-107 on Friday at Fiserv Forum, Milwaukee's fifth straight loss and its worst start since 1993-94. The 1-8 Bucks host the 7-2 Celtics on Sunday at 8:00 PM ET. Rookie Brayden Burries posted his first career double-double (21 points, 11 rebounds) in the Toronto loss, and Tyler Herro added 23 points and 10 assists.",
+      "date": "2026-11-07",
+      "ai": true,
+      "sources": [
+        "https://www.jsonline.com/story/sports/nba/bucks/2026/11/06/milwaukee-bucks-vs-toronto-raptors-nba-cup-injury-report-starters-odds/92640187007/",
+        "https://www.reuters.com/sports/basketball/raptors-come-back-beat-bucks-nba-cup-game--flm-2026-11-07/"
+      ]
+    },
+    {
+      "category": "basketball",
+      "title": "Porzingis Steps Away From Basketball to Prioritize His Health",
+      "summary": "Kristaps Porzingis announced Friday he is stepping away from basketball to prioritize his health. He has played 0 games for Golden State this season. He did not say retirement — he remains under contract (2 years / $40M re-signed in June). He was diagnosed with POTS in 2025, and ESPN reported Golden State is withholding his $20M salary for not rendering services.",
+      "date": "2026-11-06",
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/warriors-porzingis-stepping-away-basketball-prioritize-health-2026-11-07/",
+        "https://www.si.com/nba/as-kristaps-porzingis-steps-away-warriors-choice-between-four-ways-forward"
+      ]
+    },
+    {
+      "category": "baseball",
+      "title": "Blue Jays Distance Themselves From Santander's Anti-Muslim Posts",
+      "summary": "After the November 3 elections, Anthony Santander reposted two videos to his Instagram story on Wednesday, November 4 — one saying \"America voted for Sharia Last Night!\" over an image of Michigan senator-elect Abdul El-Sayed, and another saying \"Islam is not peaceful\" — and deleted them Thursday morning. The Blue Jays issued a statement saying \"Baseball is for everyone\" that did not name Santander. No disciplinary action has been announced, and Santander has not apologized publicly.",
+      "date": "2026-11-06",
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/jays-statement-anthony-santanders-anti-muslim-posts--flm-2026-11-06/"
+      ]
+    },
+    {
+      "category": "basketball",
+      "title": "Luka Doncic Scores Season-High 53 as Lakers Beat Blazers 124-118",
+      "summary": "Luka Doncic scored a season-high 53 points (17/33 FG, 14/18 FT) with 5 rebounds and 5 assists as the Lakers beat the Trail Blazers 124-118 on Friday at Crypto.com Arena, lifting his scoring average to 40.1 points per game. It was his 11th career 50-point game and his fourth straight 40+ game — the first Laker to do that since Kobe Bryant in 2012. His 363 points through 9 games are the most since Wilt Chamberlain in 1962. The Lakers are 8-2.",
+      "date": "2026-11-06",
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/basketball/luka-doncic-pours-53-lakers-rally-past-blazers--flm-2026-11-07/",
+        "https://www.espn.ph/nba/story/_/id/50406079/luka-doncic-stays-hot-scores-53-lead-lakers-blazers",
+        "https://www.thescore.com/nba/news/3647617/luka-doncic-scores-53-in-another-spectacular-offensive-game-carrying-lakers-past-blazers-124-118"
+      ]
+    },
+    {
       "category": "soccer",
       "title": "Ronaldo Announces International Retirement After Rift With Coach Jorge Jesus",
       "summary": "Cristiano Ronaldo announced his retirement from Portugal duty, effective after the November international break, following a fallout with coach Jorge Jesus. He leaves with 234 caps and 146 goals — both men's international records — and continues his club career at Al-Nassr.",
