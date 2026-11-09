@@ -31,7 +31,7 @@ export default function NewsCard({ article, featured = false }: { article: any; 
           {CATEGORY_EMOJI[article.category] || '📰'} {article.category}
         </span>
         {article.ai && (
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-violet-100 text-violet-700">
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-black/5 text-gray-700">
             🤖 AI-generated
           </span>
         )}

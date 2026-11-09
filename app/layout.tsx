@@ -4,6 +4,9 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BreakingTicker from "../components/BreakingTicker";
 import Script from "next/script";
+import { Oswald } from "next/font/google";
+
+const oswald = Oswald({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display" });
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "";
 
@@ -25,7 +28,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={oswald.variable}>
       <body className="min-h-screen flex flex-col">
         {ADSENSE_CLIENT.startsWith("ca-pub-") && (
           <Script

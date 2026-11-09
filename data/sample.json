@@ -1,6 +1,36 @@
 {
   "articles": [
     {
+      "category": "soccer",
+      "title": "Leeds condemn alleged racist abuse of Jayden Bogle",
+      "summary": "Leeds' 1-0 Premier League victory over Tottenham at Elland Road was followed by alleged racist abuse directed at defender Jayden Bogle on social media. Leeds condemned the alleged abuse. The win came on a late goal from Noah Okafor. The alleged abuse followed a tackle by Bogle on Tottenham's Mathys Tel that drew no card — VAR saw no serious foul — and Tel left the match injured. Tottenham also condemned the abuse.",
+      "date": "2026-11-08",
+      "ai": true,
+      "sources": [
+        "https://www.espn.com/soccer/story/_/id/50422908/leeds-jayden-bogle-racist-abuse"
+      ]
+    },
+    {
+      "category": "soccer",
+      "title": "Manchester City's third straight Premier League defeat",
+      "summary": "Nottingham Forest beat Manchester City 3-1 at the City Ground, with Liam Delap scoring twice. Goals from Cunha (6'), Delap (18', 73') and Cherki (52') handed City their third straight Premier League defeat — their first run of three straight league losses since November-December 2024. Delap is a Manchester City academy graduate.",
+      "date": "2026-11-08",
+      "ai": true,
+      "sources": [
+        "https://www.espn.com/video/clip/_/id/50413322/man-city-fall-again-delap-double-inspires-forest"
+      ]
+    },
+    {
+      "category": "soccer",
+      "title": "Manchester United salvage 4-4 draw with Aston Villa but stay in relegation zone",
+      "summary": "Manchester United twice came from two goals down to draw 4-4 with Aston Villa at Old Trafford on Sunday. Substitutes Joshua Zirkzee (90+2') and Patrick Dorgu (90+6') scored in stoppage time after Villa had led 4-2. United stay 18th with 8 points in 10 games, one point from leaving the relegation zone, and will spend the international break in the bottom three — the first time in 40 years they have ended a day in the relegation zone at this stage of a season.",
+      "date": "2026-11-08",
+      "ai": true,
+      "sources": [
+        "https://www.espn.com/soccer/story/_/id/50410672/man-united-premier-league-relegation-zone"
+      ]
+    },
+    {
       "category": "basketball",
       "title": "Man Arrested at LeBron James' Home on Stalking Charges",
       "summary": "A man was arrested Friday night at LeBron James' Brentwood home on stalking charges after security spotted him on cameras around 9 p.m. and called police. The suspect claimed to be James' son; the LAPD confirmed the arrest to ESPN. James was not home — he was playing in Cleveland — and the suspect did not enter the residence. His identity has not been disclosed.",

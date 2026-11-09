@@ -1,7 +1,7 @@
 export default function About() {
   return (
     <div className="max-w-3xl">
-      <div className="bg-gradient-to-r from-primary to-accent text-white p-8 rounded-2xl shadow-lg mb-6">
+      <div className="bg-primary text-white p-8 rounded-2xl shadow-lg mb-6">
         <h1 className="text-3xl font-bold">About KEYAM SPORTS ⚡️</h1>
         <p className="opacity-90">24/7 AI — Never Miss Anything</p>
       </div>

@@ -158,7 +158,7 @@ export default function AgentsPage() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <div className="bg-gradient-to-r from-primary to-accent text-white p-10 rounded-2xl shadow-lg text-center animate-fade-up">
+      <div className="bg-primary text-white p-10 rounded-2xl shadow-lg text-center animate-fade-up">
         <div className="flex items-center justify-center gap-3 mb-2">
           <h1 className="text-4xl font-bold">🤖 AI Agents Control Room</h1>
           {running && (
@@ -187,14 +187,14 @@ export default function AgentsPage() {
         <button
           onClick={startRun}
           disabled={running}
-          className="px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:transform-none"
+          className="px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-[#C81E02] hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:transform-none"
         >
           {running ? 'Agents are working…' : '▶ Run the Agents'}
         </button>
         {(running || doneCount > 0) && (
           <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
+              className="h-full bg-primary transition-all duration-500"
               style={{ width: `${(doneCount / ORDER.length) * 100}%` }}
             />
           </div>

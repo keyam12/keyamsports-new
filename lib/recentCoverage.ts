@@ -12,7 +12,15 @@ export function getRecentTopics(hoursBack = 48): string[] {
   return arts
     .filter((a) => {
       const d = (a as { date?: unknown })?.date;
-      const t = typeof d === "string" ? Date.parse(d) : NaN;
+      if (typeof d !== "string") return false;
+      // Date-only values ("2026-11-06") parse as midnight UTC, so an
+      // article dated Nov 6 fell out of the 48h window by Nov 6 13:31 UTC
+      // — that is how the Scout re-picked the Blue Jays / Santander story
+      // on 2026-11-08 09:31 AST, a day after it was published. Treat a
+      // date-only value as end of that day, when the story was still live.
+      const t = /^\d{4}-\d{2}-\d{2}$/.test(d)
+        ? Date.parse(`${d}T23:59:59.999Z`)
+        : Date.parse(d);
       return !Number.isNaN(t) && t >= cutoff;
     })
     .map((a) => String((a as { title?: unknown })?.title ?? "").trim())

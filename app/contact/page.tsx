@@ -8,7 +8,7 @@ const CONTACT_EMAIL = "keyamsports@outlook.com";
 export default function Contact() {
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-gradient-to-r from-primary to-accent text-white p-8 rounded-2xl shadow-lg mb-6">
+      <div className="bg-primary text-white p-8 rounded-2xl shadow-lg mb-6">
         <h1 className="text-3xl font-bold">📬 Contact</h1>
         <p className="opacity-90 mt-1">Tips, corrections, or partnership inquiries — we read everything.</p>
       </div>
