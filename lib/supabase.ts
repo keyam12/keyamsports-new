@@ -2,8 +2,8 @@
 // - supabaseAnon: public reads (NEXT_PUBLIC_SUPABASE_URL + ANON_KEY).
 // - supabaseAdmin: server-only writes via the service-role key — NEVER
 //   exposed to the browser. Admin routes use this.
-// When the env vars are missing, the site falls back to data/sample.json
-// and the admin panel shows the setup screen instead of crashing.
+// Existing repository publications remain readable without database credentials.
+// The admin panel shows setup instructions when writes are not configured.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const databaseFetch: typeof fetch = (input, init) => fetch(input, {

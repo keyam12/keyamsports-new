@@ -152,7 +152,7 @@ export default function AdminPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm">
           <p className="font-bold mb-1">Database not connected yet</p>
           <p className="text-gray-600">
-            No production sample stories are served while the database is disconnected. To publish from this panel:
+            Existing repository publications remain visible while the database is disconnected. To publish from this panel:
             create a free project at supabase.com, run <code>supabase/articles.sql</code> in its SQL
             Editor, then add <code>NEXT_PUBLIC_SUPABASE_URL</code>,{' '}
             <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code>{' '}

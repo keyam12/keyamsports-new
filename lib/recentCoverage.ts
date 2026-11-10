@@ -3,7 +3,7 @@
 // Scout doesn't pick a storyline it just covered. Vercel serverless has no
 // persistent filesystem between runs, but the data file ships with the
 // bundle, which is enough for a rolling 48h window.
-import articlesData from "../data/sample.json";
+import articlesData from "../data/published.json";
 
 export function getRecentTopics(hoursBack = 48): string[] {
   const cutoff = Date.now() - hoursBack * 3600_000;

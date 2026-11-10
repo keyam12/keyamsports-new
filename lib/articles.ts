@@ -2,11 +2,13 @@ import { validateArticleInput, validatePublication, isSourceUrl } from "./articl
 import { cache } from "react";
 // Articles data layer — the heart of "publish without code push".
 // Published articles live in Supabase (table `articles`) when configured;
-// Unverified bundled samples are opt-in for local development only.
+// Existing editorial publications are retained in data/published.json.
+// The original seed examples remain development-only.
 // The admin panel writes ONLY to Supabase — on Vercel the filesystem is
 // ephemeral, so writing sample.json at runtime would not persist.
 import { supabaseAnon, supabaseAdmin, isSupabaseConfigured } from "./supabase";
 import sample from "../data/sample.json";
+import published from "../data/published.json";
 
 export type ArticleStatus = "draft" | "published";
 
@@ -22,6 +24,15 @@ export interface Article {
   created_at?: string;
 }
 
+/** Keep the original article IDs, dates, copy and source attribution. */
+export function getRepositoryPublications(): Article[] {
+  return published.articles.map((a) => ({
+    ...a,
+    status: "published" as ArticleStatus,
+    sources: "sources" in a && Array.isArray(a.sources) ? a.sources.filter(isSourceUrl) : undefined,
+  }));
+}
+
 function fromSample(): Article[] {
   return (sample.articles as any[]).map((a, i) => ({
     id: `sample-${i}`,
@@ -31,8 +42,16 @@ function fromSample(): Article[] {
     date: String(a.date),
     ai: !!a.ai,
     status: "published" as ArticleStatus,
-    sources: Array.isArray(a.sources) ? a.sources.map(String) : undefined,
+    sources: Array.isArray(a.sources) ? a.sources.filter(isSourceUrl) : undefined,
   }));
+}
+
+function repositoryFallback(): Article[] {
+  // After a complete database migration, this explicit mode prevents a database
+  // outage from bringing back articles intentionally unpublished by editors.
+  if (process.env.KEYAM_CONTENT_SOURCE === "database") return [];
+  if (process.env.NODE_ENV === "development" && process.env.KEYAM_ENABLE_SAMPLE_CONTENT === "true") return fromSample();
+  return uniqueArticles(getRepositoryPublications()).sort((a, b) => b.date.localeCompare(a.date));
 }
 
 function fromRow(r: any): Article {
@@ -59,11 +78,11 @@ function uniqueArticles(articles: Article[]): Article[] {
   });
 }
 
-/** Public read: published articles, newest first. No production sample fallback. */
+/** Database publications when available; preserve existing repository notes otherwise. */
 export const getPublishedArticles = cache(async (): Promise<Article[]> => {
   try {
     const client = supabaseAnon();
-    if (!client) return process.env.NODE_ENV === "development" && process.env.KEYAM_ENABLE_SAMPLE_CONTENT === "true" ? fromSample() : [];
+    if (!client) return repositoryFallback();
     const { data, error } = await client
       .from("articles")
       .select("*")
@@ -71,12 +90,13 @@ export const getPublishedArticles = cache(async (): Promise<Article[]> => {
       .order("date", { ascending: false });
     if (error || !data) {
       console.error("[articles] Supabase read failed:", error?.message);
-      return [];
+      return repositoryFallback();
     }
+    // A successful empty result is authoritative: never undo unpublishing.
     return uniqueArticles(data.map(fromRow));
   } catch (err) {
     console.error("[articles] Supabase read failed:", err);
-    return [];
+    return repositoryFallback();
   }
 });
 

@@ -1,5 +1,7 @@
 # First stability increment
 
+**Subsequent correction:** repository history established that the mixed sample file also held thirteen editorial publications. The blanket production exclusion was too broad and has been repaired; see [CONTENT_RECOVERY.md](CONTENT_RECOVERY.md). Statements below describe the first increment at the time it was made.
+
 Baseline: `0930bc0`. Local branch: `fix/stability-audit`. No remote push, production deployment, paid subscription, real article publication, database operation or scheduled job was performed.
 
 ## Completed

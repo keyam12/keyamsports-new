@@ -1,0 +1,151 @@
+{
+  "articles": [
+    {
+      "id": "sample-0",
+      "category": "soccer",
+      "title": "Leeds condemn alleged racist abuse of Jayden Bogle",
+      "summary": "Leeds' 1-0 Premier League victory over Tottenham at Elland Road was followed by alleged racist abuse directed at defender Jayden Bogle on social media. Leeds condemned the alleged abuse. The win came on a late goal from Noah Okafor. The alleged abuse followed a tackle by Bogle on Tottenham's Mathys Tel that drew no card — VAR saw no serious foul — and Tel left the match injured. Tottenham also condemned the abuse.",
+      "date": "2026-11-08",
+      "ai": true,
+      "sources": [
+        "https://www.espn.com/soccer/story/_/id/50422908/leeds-jayden-bogle-racist-abuse"
+      ]
+    },
+    {
+      "id": "sample-1",
+      "category": "soccer",
+      "title": "Manchester City's third straight Premier League defeat",
+      "summary": "Nottingham Forest beat Manchester City 3-1 at the City Ground, with Liam Delap scoring twice. Goals from Cunha (6'), Delap (18', 73') and Cherki (52') handed City their third straight Premier League defeat — their first run of three straight league losses since November-December 2024. Delap is a Manchester City academy graduate.",
+      "date": "2026-11-08",
+      "ai": true,
+      "sources": [
+        "https://www.espn.com/video/clip/_/id/50413322/man-city-fall-again-delap-double-inspires-forest"
+      ]
+    },
+    {
+      "id": "sample-2",
+      "category": "soccer",
+      "title": "Manchester United salvage 4-4 draw with Aston Villa but stay in relegation zone",
+      "summary": "Manchester United twice came from two goals down to draw 4-4 with Aston Villa at Old Trafford on Sunday. Substitutes Joshua Zirkzee (90+2') and Patrick Dorgu (90+6') scored in stoppage time after Villa had led 4-2. United stay 18th with 8 points in 10 games, one point from leaving the relegation zone, and will spend the international break in the bottom three — the first time in 40 years they have ended a day in the relegation zone at this stage of a season.",
+      "date": "2026-11-08",
+      "ai": true,
+      "sources": [
+        "https://www.espn.com/soccer/story/_/id/50410672/man-united-premier-league-relegation-zone"
+      ]
+    },
+    {
+      "id": "sample-3",
+      "category": "basketball",
+      "title": "Man Arrested at LeBron James' Home on Stalking Charges",
+      "summary": "A man was arrested Friday night at LeBron James' Brentwood home on stalking charges after security spotted him on cameras around 9 p.m. and called police. The suspect claimed to be James' son; the LAPD confirmed the arrest to ESPN. James was not home — he was playing in Cleveland — and the suspect did not enter the residence. His identity has not been disclosed.",
+      "date": "2026-11-07",
+      "ai": true,
+      "sources": [
+        "https://nypost.com/2026/11/07/us-news/stalker-arrested-at-lebron-james-la-home/",
+        "https://larrybrownsports.com/basketball/man-arrested-stalking-lebron-james-home/777497"
+      ]
+    },
+    {
+      "id": "sample-4",
+      "category": "basketball",
+      "title": "Bucks' 1-8 Start Faces a Test Against the Celtics",
+      "summary": "The Raptors beat the Bucks 121-107 on Friday at Fiserv Forum, Milwaukee's fifth straight loss and its worst start since 1993-94. The 1-8 Bucks host the 7-2 Celtics on Sunday at 8:00 PM ET. Rookie Brayden Burries posted his first career double-double (21 points, 11 rebounds) in the Toronto loss, and Tyler Herro added 23 points and 10 assists.",
+      "date": "2026-11-07",
+      "ai": true,
+      "sources": [
+        "https://www.jsonline.com/story/sports/nba/bucks/2026/11/06/milwaukee-bucks-vs-toronto-raptors-nba-cup-injury-report-starters-odds/92640187007/",
+        "https://www.reuters.com/sports/basketball/raptors-come-back-beat-bucks-nba-cup-game--flm-2026-11-07/"
+      ]
+    },
+    {
+      "id": "sample-5",
+      "category": "basketball",
+      "title": "Porzingis Steps Away From Basketball to Prioritize His Health",
+      "summary": "Kristaps Porzingis announced Friday he is stepping away from basketball to prioritize his health. He has played 0 games for Golden State this season. He did not say retirement — he remains under contract (2 years / $40M re-signed in June). He was diagnosed with POTS in 2025, and ESPN reported Golden State is withholding his $20M salary for not rendering services.",
+      "date": "2026-11-06",
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/warriors-porzingis-stepping-away-basketball-prioritize-health-2026-11-07/",
+        "https://www.si.com/nba/as-kristaps-porzingis-steps-away-warriors-choice-between-four-ways-forward"
+      ]
+    },
+    {
+      "id": "sample-6",
+      "category": "baseball",
+      "title": "Blue Jays Distance Themselves From Santander's Anti-Muslim Posts",
+      "summary": "After the November 3 elections, Anthony Santander reposted two videos to his Instagram story on Wednesday, November 4 — one saying \"America voted for Sharia Last Night!\" over an image of Michigan senator-elect Abdul El-Sayed, and another saying \"Islam is not peaceful\" — and deleted them Thursday morning. The Blue Jays issued a statement saying \"Baseball is for everyone\" that did not name Santander. No disciplinary action has been announced, and Santander has not apologized publicly.",
+      "date": "2026-11-06",
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/jays-statement-anthony-santanders-anti-muslim-posts--flm-2026-11-06/"
+      ]
+    },
+    {
+      "id": "sample-7",
+      "category": "basketball",
+      "title": "Luka Doncic Scores Season-High 53 as Lakers Beat Blazers 124-118",
+      "summary": "Luka Doncic scored a season-high 53 points (17/33 FG, 14/18 FT) with 5 rebounds and 5 assists as the Lakers beat the Trail Blazers 124-118 on Friday at Crypto.com Arena, lifting his scoring average to 40.1 points per game. It was his 11th career 50-point game and his fourth straight 40+ game — the first Laker to do that since Kobe Bryant in 2012. His 363 points through 9 games are the most since Wilt Chamberlain in 1962. The Lakers are 8-2.",
+      "date": "2026-11-06",
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/basketball/luka-doncic-pours-53-lakers-rally-past-blazers--flm-2026-11-07/",
+        "https://www.espn.ph/nba/story/_/id/50406079/luka-doncic-stays-hot-scores-53-lead-lakers-blazers",
+        "https://www.thescore.com/nba/news/3647617/luka-doncic-scores-53-in-another-spectacular-offensive-game-carrying-lakers-past-blazers-124-118"
+      ]
+    },
+    {
+      "id": "sample-8",
+      "category": "soccer",
+      "title": "Ronaldo Announces International Retirement After Rift With Coach Jorge Jesus",
+      "summary": "Cristiano Ronaldo announced his retirement from Portugal duty, effective after the November international break, following a fallout with coach Jorge Jesus. He leaves with 234 caps and 146 goals — both men's international records — and continues his club career at Al-Nassr.",
+      "date": "2026-11-05",
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/soccer/ronaldo-exits-portugal-stage-with-records-intact-farewell-clouded-by-rift-2026-11-05/"
+      ]
+    },
+    {
+      "id": "sample-9",
+      "category": "basketball",
+      "title": "Wembanyama Explodes for Career-High 52 in Spurs' 112-111 Win Over Mavericks",
+      "summary": "Victor Wembanyama poured in a career-high 52 points with 24 rebounds and 8 blocks, hitting the game-winning free throw with 24.2 seconds left as the Spurs edged the Mavericks 112-111 for their sixth straight win.",
+      "date": "2026-11-05",
+      "ai": true,
+      "sources": [
+        "https://www.aljazeera.com/amp/sports/2026/11/5/wembanyama-pours-in-career-high-52-points-as-spurs-edge-mavericks-112-111",
+        "https://www.thescore.com/nba/news/3645709/wemby-goes-off-for-career-high-52-points-i-can-still-do-more"
+      ]
+    },
+    {
+      "id": "sample-10",
+      "category": "baseball",
+      "title": "Bo Naylor Testifies He Saw Nothing Unusual in Clase-Ortiz Pitch Case",
+      "summary": "Former Guardians catcher Bo Naylor testified Thursday in Brooklyn that he noticed nothing unusual about pitches from Emmanuel Clase or Luis Ortiz, who are accused of rigging pitches. Under cross-examination he said he didn't know gamblers could bet on individual pitches until the case arose.",
+      "date": "2026-11-06",
+      "ai": true,
+      "sources": [
+        "https://www.sportsnet.ca/mlb/article/catcher-bo-naylor-testifies-he-didnt-know-gamblers-bet-on-individual-pitches/",
+        "https://www.covers.com/industry/nothing-suspicious-says-ex-guardian-bo-naylor-in-clase-ortiz-hearing-nov-6-2026"
+      ]
+    },
+    {
+      "id": "sample-11",
+      "category": "football",
+      "title": "Jaguars Rout Shorthanded Ravens 33-10 in Dominant Display",
+      "summary": "The Jaguars crushed the short-handed Ravens 33-10 for their fifth win in six games. Trevor Lawrence threw for 242 yards and a touchdown, Cam Little kicked four field goals, and Jacksonville's defense forced three turnovers while holding Derrick Henry to 57 yards.",
+      "date": "2026-11-06",
+      "ai": true,
+      "sources": [
+        "https://www.reuters.com/sports/nfl/jaguars-limit-quarterback-starved-ravens-227-yards-one-sided-win--flm-2026-11-06/"
+      ]
+    },
+    {
+      "id": "sample-12",
+      "category": "baseball",
+      "title": "MLB Pitch-Rigging Trial Opens as Baseball Faces Integrity Test",
+      "summary": "The federal trial of Guardians pitchers Emmanuel Clase and Luis Ortiz began Monday in Brooklyn, with both accused of rigging pitches as part of a betting scheme. A major MLB storyline moves from the diamond to the courtroom.",
+      "date": "2026-11-02",
+      "ai": true
+    }
+  ]
+}

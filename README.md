@@ -6,7 +6,9 @@ Existing Next.js App Router sports site. Branding, colors, typography and homepa
 
 Use Node 22 LTS or newer (validated with Node 24). Run `npm ci`, copy `.env.example` to `.env.local`, configure the services you intend to use, then `npm run dev`.
 
-Without Supabase, the public feed is empty rather than showing unverified bundled stories. To inspect the old archive locally only, set `KEYAM_ENABLE_SAMPLE_CONTENT=true` in development. No samples are served or seeded in production.
+Existing editorial notes live in `data/published.json` and remain visible without Supabase. They retain their original copy, dates, IDs and source links. The six original seed examples are excluded from this publication file; `KEYAM_ENABLE_SAMPLE_CONTENT=true` exposes the legacy mixed file only in development. No seed examples are served or seeded in production.
+
+When Supabase returns successfully, its published results are authoritative, including an intentionally empty list. On missing configuration or a read failure, the existing repository publications remain available. After fully migrating the notes to Supabase, set `KEYAM_CONTENT_SOURCE=database` to disable repository fallback and prevent an outage from restoring content that editors later unpublished.
 
 ## Checks
 
@@ -27,4 +29,4 @@ See [.env.example](.env.example). Do not commit credentials.
 - Set `NEXT_PUBLIC_SITE_URL` to the production origin. `GOOGLE_SITE_VERIFICATION` supplies the optional Search Console meta verification token; account verification must still be completed in Search Console.
 - AdSense is existing optional functionality. The baseline CSP needs provider-specific review before advertisements or third-party embeds are enabled. GA4, licensed images/video and a consent flow are not implemented yet.
 
-Read the [audit and roadmap](docs/REPOSITORY_AUDIT.md) and [stability results](docs/STABILITY_CHANGELOG.md) before staging. Confirm Supabase/Redis access, provider permissions, model access and editorial review rules in staging. No production deployment is authorized by this change.
+Read the [audit and roadmap](docs/REPOSITORY_AUDIT.md) and [stability results](docs/STABILITY_CHANGELOG.md) before staging. Confirm Supabase/Redis access, provider permissions, model access and editorial review rules in staging. Production deployments require explicit user authorization. See [content recovery](docs/CONTENT_RECOVERY.md) for the correction preserving the existing editorial notes.

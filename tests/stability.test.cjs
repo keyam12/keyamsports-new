@@ -18,7 +18,9 @@ const llm = require('../agents/llm.ts');
 const { reviewArticle } = require('../agents/SeniorEditorAgent.ts');
 const { runScout } = require('../agents/ScoutAgent.ts');
 const headlines = require('../lib/headlines.ts');
-const { getPublishedArticles } = require('../lib/articles.ts');
+const { getPublishedArticles, getRepositoryPublications } = require('../lib/articles.ts');
+const repositoryArticles = require('../data/published.json').articles;
+const originalArticles = require('../data/sample.json').articles;
 
 const req = (cookie, origin) => new Request('https://keyam.test/admin', { headers: { ...(cookie ? { cookie } : {}), ...(origin ? { origin } : {}) } });
 const article = { title: 'A verified headline', summary: 'A sourced summary.', category: 'basketball', date: '2026-01-01', status: 'published', sources: ['https://example.com/source'] };
@@ -152,14 +154,26 @@ test('source outage stops scouting instead of asking for news from model memory'
   } finally { llm.completeFor = original.complete; llm.hasApiKey = original.key; llm.sleep = original.sleep; headlines.getHeadlines = original.headlines; }
 });
 
-test('production never falls back to unverified sample articles', async () => {
+test('production preserves editorial publications while excluding original seed examples', async () => {
   const previous = process.env.NODE_ENV;
   process.env.NODE_ENV = 'production';
   process.env.KEYAM_ENABLE_SAMPLE_CONTENT = 'true';
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  try { assert.deepEqual(await getPublishedArticles(), []); }
-  finally { process.env.NODE_ENV = previous; delete process.env.KEYAM_ENABLE_SAMPLE_CONTENT; }
+  try {
+    const actual = await getPublishedArticles();
+    assert.equal(actual.length, 13);
+    assert.equal(new Set(actual.map(a => a.id)).size, 13);
+    assert.equal(actual.some(a => a.title === 'Lakers Rally Past Celtics'), false);
+    assert.equal(actual.some(a => a.title === 'Rookie Drops 40 in Debut'), false);
+    for (const expected of repositoryArticles) {
+      const restored = actual.find(a => a.id === expected.id);
+      assert.equal(restored.title, expected.title);
+      assert.equal(restored.summary, expected.summary);
+      assert.equal(restored.date, expected.date);
+      assert.deepEqual(restored.sources, expected.sources);
+    }
+  } finally { process.env.NODE_ENV = previous; delete process.env.KEYAM_ENABLE_SAMPLE_CONTENT; }
 });
 
 test('production sensitive rate limiting fails closed without Redis', async () => {
@@ -193,13 +207,50 @@ test('login validates input, sets a usable cookie and throttles repeated attempt
   } finally { process.env.NODE_ENV = previous; delete process.env.ADMIN_PASSWORD; }
 });
 
-test('database failure never replaces published articles with sample content', async () => {
+test('database failures retain existing editorial notes without serving seed examples', async () => {
   const db = require('../lib/supabase.ts');
   const original = db.supabaseAnon;
   db.supabaseAnon = () => ({ from: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: null, error: { message: 'fixture database outage' } }) }) }) }) });
   try {
-    assert.deepEqual(await getPublishedArticles(), []);
+    assert.equal((await getPublishedArticles()).length, 13);
     db.supabaseAnon = () => { throw new Error('fixture malformed configuration'); };
-    assert.deepEqual(await getPublishedArticles(), []);
+    assert.equal((await getPublishedArticles()).length, 13);
   } finally { db.supabaseAnon = original; }
+});
+
+
+test('recovered notes preserve all originally published copy and attribution', () => {
+  for (const restored of getRepositoryPublications()) {
+    const index = Number(restored.id.replace('sample-', ''));
+    const original = originalArticles[index];
+    assert.deepEqual({ title: restored.title, summary: restored.summary, date: restored.date, ai: restored.ai, category: restored.category, sources: restored.sources },
+      { title: original.title, summary: original.summary, date: original.date, ai: original.ai, category: original.category, sources: original.sources });
+  }
+});
+
+test('a successful database result stays authoritative, including intentional unpublishing', async () => {
+  const db = require('../lib/supabase.ts');
+  const original = db.supabaseAnon;
+  let rows = [];
+  db.supabaseAnon = () => ({ from: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: rows, error: null }) }) }) }) });
+  try {
+    assert.deepEqual(await getPublishedArticles(), []);
+    rows = [{ id: 'db-fixture', ...article, ai: false }];
+    const actual = await getPublishedArticles();
+    assert.equal(actual.length, 1);
+    assert.equal(actual[0].id, 'db-fixture');
+    assert.equal(actual.some(a => a.id.startsWith('sample-')), false);
+  } finally { db.supabaseAnon = original; }
+});
+
+test('explicit database-only mode never revives repository notes on an outage', async () => {
+  const db = require('../lib/supabase.ts');
+  const original = db.supabaseAnon;
+  process.env.KEYAM_CONTENT_SOURCE = 'database';
+  try {
+    db.supabaseAnon = () => null;
+    assert.deepEqual(await getPublishedArticles(), []);
+    db.supabaseAnon = () => { throw new Error('fixture outage after editorial unpublishing'); };
+    assert.deepEqual(await getPublishedArticles(), []);
+  } finally { db.supabaseAnon = original; delete process.env.KEYAM_CONTENT_SOURCE; }
 });
