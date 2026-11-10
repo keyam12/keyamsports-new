@@ -6,7 +6,7 @@
 // in-memory sliding window (fine for local dev; NOT safe on serverless
 // because each instance keeps its own counters).
 //
-// Call signature is the same in both modes: rateLimit(key, limit, windowMs).
+// failClosed=true requires Redis in production and rejects Redis failures.
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
@@ -74,10 +74,12 @@ function getLimiter(limit: number, windowMs: number): Ratelimit | null {
 export async function rateLimit(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
+  failClosed = false
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(limit, windowMs);
   if (!limiter) {
+    if (failClosed && process.env.NODE_ENV === "production") return { ok: false, retryAfter: 60 };
     if (!loggedMode) {
       loggedMode = true;
       console.warn(
@@ -94,10 +96,9 @@ export async function rateLimit(
       retryAfter: Math.max(1, Math.ceil((reset - Date.now()) / 1000)),
     };
   } catch (err) {
-    // Fail open to the local limiter rather than blocking all traffic
-    // if Redis has a transient outage.
-    console.error("[rateLimit] Upstash error, falling back to memory:", err);
-    return memoryRateLimit(key, limit, windowMs);
+    // Public reads may use memory on outage. Sensitive endpoints fail closed.
+    console.error("[rateLimit] Upstash request failed:", err);
+    return failClosed ? { ok: false, retryAfter: 60 } : memoryRateLimit(key, limit, windowMs);
   }
 }
 

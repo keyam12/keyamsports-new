@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Baseball — KEYAM SPORTS', description: 'Latest baseball coverage from KEYAM SPORTS.', alternates: { canonical: '/baseball' } };
 import NewsCard from '../../components/NewsCard';
 import AdSlot from '../../components/AdSlot';
 import { getPublishedArticles } from '../../lib/articles';
@@ -12,9 +14,10 @@ export default async function Baseball() {
         <p className="opacity-90">Diamond headlines, powered by AI</p>
       </div>
       <div className="space-y-4">
-        {filtered.slice(0, 2).map((a: any, i: number) => (<NewsCard key={i} article={a} />))}
+        {filtered.length === 0 && <p className="text-gray-500 bg-white border rounded-2xl p-5">No published stories in this section yet.</p>}
+        {filtered.slice(0, 2).map((a: any, i: number) => (<NewsCard key={a.id} article={a} />))}
         <AdSlot slot="" format="infeed" label="In-feed · category" />
-        {filtered.slice(2).map((a: any, i: number) => (<NewsCard key={i + 2} article={a} />))}
+        {filtered.slice(2).map((a: any, i: number) => (<NewsCard key={a.id} article={a} />))}
       </div>
     </div>
   );

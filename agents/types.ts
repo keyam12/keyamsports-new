@@ -37,6 +37,8 @@ export interface RunContext {
   sources?: string[];
   /** True when no OPENAI_API_KEY is set — agents use demo content */
   demo: boolean;
+  /** AI review is advisory; a human must approve publication. */
+  publicationStatus: "needs_review";
   /** Senior Editor's final verdict: APPROVED or NEEDS_FIXES */
   seniorEditorVerdict?: string;
   /** Notes from the Senior Editor's review (fixes applied, if any) */

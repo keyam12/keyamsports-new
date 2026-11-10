@@ -3,13 +3,14 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { isAdmin } from "../../../../lib/adminAuth";
+import { isAdmin, isTrustedOrigin } from "../../../../lib/adminAuth";
 import { seedFromSample } from "../../../../lib/articles";
 
 export async function POST(req: Request) {
-  if (!isAdmin(req)) {
+  if (!isAdmin(req) || !isTrustedOrigin(req)) {
     return NextResponse.json({ error: "Not authorized." }, { status: 401 });
   }
+  if (process.env.NODE_ENV === "production") return NextResponse.json({ error: "Sample seeding is disabled in production." }, { status: 403 });
   try {
     const count = await seedFromSample();
     return NextResponse.json({ ok: true, seeded: count });

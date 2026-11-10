@@ -37,3 +37,7 @@ body { @apply bg-snow text-gray-900; font-family: ui-sans-serif, system-ui, -app
 .feed-scroll::-webkit-scrollbar { width: 8px; }
 .feed-scroll::-webkit-scrollbar-track { background: transparent; }
 .feed-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee, .animate-fade-up, .animate-blink, .animate-pulse { animation: none !important; }
+}

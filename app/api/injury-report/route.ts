@@ -1,3 +1,4 @@
+import { authorizeAgentRun } from "../../../lib/agentAccess";
 // GET /api/injury-report — runs the Injury Report agent and returns a
 // Spanish alert digest plus the full injury list. Used by the
 // keyam-injury-watch cron (every 2h) to alert Kevin on NEW injuries.
@@ -9,6 +10,8 @@ import { runInjuryReport } from "../../../agents/InjuryAgent";
 import { rateLimit, clientIp } from "../../../lib/rateLimit";
 
 export async function GET(req: Request) {
+  const denied = await authorizeAgentRun(req);
+  if (denied) return denied;
   const rl = await rateLimit(`injury-report:${clientIp(req)}`, 10, 60_000);
   if (!rl.ok) {
     return NextResponse.json(

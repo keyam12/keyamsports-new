@@ -12,15 +12,11 @@ export async function runStats(
   if (hasApiKey()) {
     emit({ type: "agent_log", agent: "stats", message: "Finding the key stat with AI…" });
     const stats = await completeFor("stats",
-      `Give ONE striking stat highlight (one sentence, with a number) for this sports storyline: ${ctx.topic}.\nContext: ${ctx.findings}`
+      `Use ONLY statistics explicitly present in the supplied context. If none is available reply exactly "No verified statistic available." Never infer, invent or recall a statistic. Give at most one sourced stat highlight for this sports storyline: ${ctx.topic}.\nContext: ${ctx.findings}`
     );
     emit({ type: "agent_done", agent: "stats", message: "Key stat found." });
     return stats;
   }
 
-  await sleep(900);
-  emit({ type: "agent_log", agent: "stats", message: "Demo mode — pulling a highlight number…" });
-  const stats = `Stat to watch: momentum has flipped in 3 of the last 4 matchups in this ${ctx.topic} race — the next game could decide everything.`;
-  emit({ type: "agent_done", agent: "stats", message: "Key stat found." });
-  return stats;
+  throw new Error("AI credentials are not configured; no statistics were generated.");
 }

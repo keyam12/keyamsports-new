@@ -41,7 +41,7 @@ export default function FavoritesBar({
 
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites)); } catch { /* Storage may be blocked. */ }
     onChange(favorites, query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [favorites, query, ready]);
@@ -56,6 +56,7 @@ export default function FavoritesBar({
     <div className="bg-white border rounded-2xl p-4 shadow-sm mb-6">
       <input
         type="search"
+        aria-label="Search headlines"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="🔍 Search headlines…"
@@ -68,6 +69,7 @@ export default function FavoritesBar({
           return (
             <button
               key={s.id}
+              aria-pressed={active}
               onClick={() => toggle(s.id)}
               className={`text-xs font-bold px-3 py-1.5 rounded-full transition ${
                 active ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

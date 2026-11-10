@@ -4,16 +4,20 @@ import { useEffect, useState } from 'react';
 export default function LiveScoresWidget() {
   const [games, setGames] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [live, setLive] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [available, setAvailable] = useState(false);
 
   async function loadScores() {
     try {
       const res = await fetch('/api/live-scores');
+      if (!res.ok) throw new Error("Scores unavailable");
       const data = await res.json();
       setGames(data.results || []);
-      setLive(!!data.live);
+      setAvailable(data.available === true);
+      setUpdatedAt(data.updatedAt || null);
     } catch (err) {
-      console.error(err);
+      setGames([]);
+      setAvailable(false);
     } finally {
       setLoading(false);
     }
@@ -21,7 +25,7 @@ export default function LiveScoresWidget() {
 
   useEffect(() => {
     loadScores();
-    const interval = setInterval(loadScores, 5 * 60 * 1000);
+    const interval = setInterval(loadScores, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -32,23 +36,15 @@ export default function LiveScoresWidget() {
     return (
       <div className="p-4 bg-white border rounded text-center text-gray-600">
         ⚽🏀⚾🏈<br />
-        <strong>No live games right now</strong>
-        <p className="text-sm">Check back later for real-time updates.</p>
+        <strong>{available ? "No games in the current scores feed" : "Scores are temporarily unavailable"}</strong>
+        <p className="text-sm">Check back later for score updates.</p>
       </div>
     );
 
   return (
     <div className="border rounded p-4 bg-white">
-      <h4 className="font-bold mb-1">Scores{" "}
-        {live ? (
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 align-middle">● LIVE</span>
-        ) : (
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 align-middle">DEMO</span>
-        )}
-      </h4>
-      {!live && (
-        <p className="text-xs text-gray-500 mb-3">Sample data — live API unreachable right now.</p>
-      )}
+      <h4 className="font-bold mb-1">Scores <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 align-middle">SNAPSHOT</span></h4>
+      <p className="text-xs text-gray-500 mb-3">{updatedAt && <>Last checked <time dateTime={updatedAt}>{new Date(updatedAt).toLocaleString()}</time>. </>}Periodic results; not a real-time feed.</p>
       <div className="space-y-4">
         {games.map((g, i) => (
           <div
@@ -76,10 +72,10 @@ export default function LiveScoresWidget() {
             </div>
             <div className="text-right">
               <div className="font-bold text-lg">
-                {g.scores?.home ?? 0}-{g.scores?.away ?? 0}
+                {g.scores?.home ?? '—'}-{g.scores?.away ?? '—'}
               </div>
               <div className="text-xs text-gray-500">
-                {g.league} ({g.time})
+                {g.league} ({g.time}) · {g.eventDate}
               </div>
             </div>
           </div>

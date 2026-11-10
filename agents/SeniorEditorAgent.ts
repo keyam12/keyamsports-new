@@ -5,8 +5,7 @@
 //  2. reviewArticle: final quality gate AFTER the Editor assembles the
 //     article — checks every factual claim against the Scout's findings,
 //     fixes wrong numbers/names, and either approves or corrects the piece.
-// Fail-open: if the review call errors, the Editor's article stands and
-// the run continues — a quality gate must never kill a run.
+// Failed or incomplete reviews always require human review.
 import type { EmitFn, RunContext } from "./types";
 import { completeFor, hasApiKey, sleep } from "./llm";
 
@@ -46,7 +45,7 @@ export async function pickTopStoryline(
 }
 
 export interface ReviewResult {
-  verdict: "APPROVED" | "NEEDS_FIXES";
+  verdict: "APPROVED" | "NEEDS_FIXES" | "NEEDS_REVIEW";
   notes: string[];
   article: string;
 }
@@ -59,8 +58,8 @@ export async function reviewArticle(
   await sleep(600);
 
   if (!hasApiKey()) {
-    emit({ type: "agent_done", agent: "senior_editor", message: "Demo mode — article approved as-is." });
-    return { verdict: "APPROVED", notes: ["Demo mode: no fact-check performed."], article: ctx.article };
+    emit({ type: "agent_done", agent: "senior_editor", message: "No fact-check performed — human review required." });
+    return { verdict: "NEEDS_REVIEW", notes: ["No fact-check performed."], article: ctx.article };
   }
 
   try {
@@ -77,7 +76,12 @@ export async function reviewArticle(
       notes?: string[];
       correctedArticle?: string;
     };
-    const verdict = parsed.verdict === "NEEDS_FIXES" ? "NEEDS_FIXES" : "APPROVED";
+    if (!["APPROVED", "NEEDS_FIXES"].includes(parsed.verdict || "") ||
+        !Array.isArray(parsed.notes) || !parsed.notes.every((note) => typeof note === "string") ||
+        typeof parsed.correctedArticle !== "string" || !parsed.correctedArticle.trim()) {
+      throw new Error("Invalid editorial review response");
+    }
+    const verdict = parsed.verdict as "APPROVED" | "NEEDS_FIXES";
     const notes = Array.isArray(parsed.notes) ? parsed.notes : [];
     const article =
       verdict === "NEEDS_FIXES" && parsed.correctedArticle
@@ -96,7 +100,7 @@ export async function reviewArticle(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     emit({ type: "agent_log", agent: "senior_editor", message: `Review failed (${msg}) — keeping Editor's article.` });
-    emit({ type: "agent_done", agent: "senior_editor", message: "Review skipped — article stands." });
-    return { verdict: "APPROVED", notes: ["Review skipped (error) — Editor's article kept as-is."], article: ctx.article };
+    emit({ type: "agent_done", agent: "senior_editor", message: "Review failed — human review required." });
+    return { verdict: "NEEDS_REVIEW", notes: ["Automated review failed. Human review is required."], article: ctx.article };
   }
 }

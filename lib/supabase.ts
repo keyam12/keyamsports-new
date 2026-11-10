@@ -6,6 +6,11 @@
 // and the admin panel shows the setup screen instead of crashing.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+const databaseFetch: typeof fetch = (input, init) => fetch(input, {
+  ...init, cache: "no-store",
+  signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000),
+});
+
 export function isSupabaseConfigured(): boolean {
   return !!(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -18,12 +23,12 @@ export function supabaseAnon(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
-  return createClient(url, key);
+  return createClient(url, key, { global: { fetch: databaseFetch }, auth: { persistSession: false } });
 }
 
 export function supabaseAdmin(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
+  return createClient(url, key, { global: { fetch: databaseFetch }, auth: { persistSession: false } });
 }

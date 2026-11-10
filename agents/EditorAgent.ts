@@ -44,6 +44,6 @@ export async function runEditor(
     demoNote;
 
   await sleep(500);
-  emit({ type: "agent_done", agent: "editor", message: "Article published to the newsroom." });
+  emit({ type: "agent_done", agent: "editor", message: "Draft assembled for editorial review." });
   return article;
 }

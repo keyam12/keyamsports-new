@@ -17,7 +17,8 @@ export async function runCrew(
   opts?: { excludeTopics?: string[] }
 ): Promise<RunContext> {
   const emit: EmitFn = (e) => emitRaw({ ...e, at: new Date().toISOString() });
-  const demo = !hasApiKey();
+  if (!hasApiKey()) throw new Error("AI credentials are not configured; no demo news is generated.");
+  const demo = false;
 
   const ctx: RunContext = {
     topic: "",
@@ -26,6 +27,7 @@ export async function runCrew(
     stats: "",
     article: "",
     demo,
+    publicationStatus: "needs_review",
   };
 
   const wrap = async (id: AgentId, fn: () => Promise<void>) => {
@@ -75,12 +77,12 @@ export async function runCrew(
     ctx.article = await runEditor(ctx, emit);
   });
 
-  // 5. Senior Editor: final fact-check (fail-open — never kills the run)
+  // 5. Automated review is advisory; human approval is still required.
   const review = await reviewArticle(ctx, emit);
   ctx.article = review.article;
   ctx.seniorEditorVerdict = review.verdict;
   ctx.seniorEditorNotes = review.notes;
 
-  emit({ type: "run_done", message: "All agents finished. Article ready.", payload: ctx });
+  emit({ type: "run_done", message: "Draft complete. Human editorial review required; nothing was published.", payload: ctx });
   return ctx;
 }

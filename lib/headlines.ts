@@ -24,14 +24,22 @@ async function fetchFeed(sport: string, url: string, timeoutMs = 7000): Promise<
     const res = await fetch(url, { signal: ctrl.signal });
     if (!res.ok) return [];
     const data = await res.json();
-    const articles = data?.articles || [];
+    const articles = Array.isArray(data?.articles) ? data.articles : [];
     return articles.slice(0, 6).map((a: any) => ({
       sport,
       headline: String(a.headline || "").trim(),
       description: String(a.description || "").trim(),
       link: String(a.links?.web?.href || ""),
       published: String(a.published || ""),
-    })).filter((h: Headline) => h.headline.length > 0);
+    })).filter((h: Headline) => {
+      const published = Date.parse(h.published);
+      try {
+        const url = new URL(h.link);
+        return h.headline.length > 0 && url.protocol === "https:" &&
+          (url.hostname === "espn.com" || url.hostname.endsWith(".espn.com")) &&
+          Number.isFinite(published) && published <= Date.now() && Date.now() - published < 48 * 3600_000;
+      } catch { return false; }
+    });
   } catch {
     return [];
   } finally {

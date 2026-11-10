@@ -4,3 +4,7 @@ node_modules/
 .env
 .env.local
 latest_agent_post.txt
+
+.env.*
+!.env.example
+*.tsbuildinfo

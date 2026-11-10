@@ -4,29 +4,6 @@ import { completeFor, hasApiKey, sleep } from "./llm";
 import { getHeadlines, formatHeadlines } from "../lib/headlines";
 import { getRecentTopics, formatCoveredTopics } from "../lib/recentCoverage";
 
-const DEMO_STORYLINES = [
-  {
-    topic: "NBA Opening Week",
-    findings:
-      "The new NBA season has tipped off. Early storylines: hyped rookie debuts, an opening-night overtime thriller, and title contenders already starting to separate from the pack.",
-  },
-  {
-    topic: "World Series",
-    findings:
-      "It's late October, which means World Series baseball. The Fall Classic is underway with elite pitching duels, late-inning drama, and a championship on the line.",
-  },
-  {
-    topic: "NFL Midseason",
-    findings:
-      "The NFL season has hit its midpoint. Playoff races are tightening, MVP candidates are emerging, and a few surprise teams are crashing the contender conversation.",
-  },
-  {
-    topic: "Champions League",
-    findings:
-      "The Champions League group stage is in full swing across Europe. Matchday drama, late winners, and breakout performances from young stars headline the week.",
-  },
-];
-
 export interface ScoutOptions {
   /** Topics covered very recently (e.g. recent chat drafts) — don't pick these again. */
   excludeTopics?: string[];
@@ -53,7 +30,8 @@ export async function runScout(
         formatCoveredTopics(covered)
       : "";
 
-  if (hasApiKey()) {
+  if (!hasApiKey()) throw new Error("AI credentials are not configured");
+  {
     emit({ type: "agent_log", agent: "scout", message: `Fetching today's real ${opts.sport || "sports"} headlines…` });
     const headlines = await getHeadlines(opts.sport);
     let prompt: string;
@@ -64,10 +42,7 @@ export async function runScout(
         formatHeadlines(headlines) +
         coveredBlock;
     } else {
-      emit({ type: "agent_log", agent: "scout", message: "Headline feed unreachable — asking AI for today's top storyline…" });
-      prompt =
-        "What is the single biggest sports storyline today? Reply with one short topic line, then 2-3 sentences of findings. Format exactly:\nTOPIC: ...\nFINDINGS: ...\n" +
-        coveredBlock;
+      throw new Error("No source headlines available; generation stopped.");
     }
     const raw = await completeFor("scout", prompt);
     const topic = raw.match(/TOPIC:\s*(.+)/)?.[1]?.trim() || "Today's Top Story";
@@ -76,17 +51,12 @@ export async function runScout(
     const sources = (raw.match(/SOURCES:\s*([\s\S]+)/)?.[1] || "")
       .split(/[\n,]/)
       .map((s) => s.trim())
-      .filter((s) => /^https?:\/\//.test(s))
+      .filter((s) => headlines.some((headline) => headline.link === s))
       .slice(0, 3);
+    if (!sources.length) throw new Error("Scout did not return a source from the supplied feed");
     emit({ type: "agent_log", agent: "scout", message: `Picked storyline: ${topic}` });
     emit({ type: "agent_done", agent: "scout", message: "Storyline locked in." });
     return { topic, findings, sources };
   }
 
-  const pick = DEMO_STORYLINES[Math.floor(Math.random() * DEMO_STORYLINES.length)];
-  emit({ type: "agent_log", agent: "scout", message: "Demo mode — picking from trending storylines…" });
-  await sleep(700);
-  emit({ type: "agent_log", agent: "scout", message: `Picked storyline: ${pick.topic}` });
-  emit({ type: "agent_done", agent: "scout", message: "Storyline locked in." });
-  return { topic: pick.topic, findings: pick.findings, sources: [] };
 }

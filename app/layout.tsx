@@ -14,6 +14,8 @@ export const metadata = {
   title: "KEYAM SPORTS",
   description: "24/7 AI — Never Miss Anything ⚡️",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://keyam-sports.vercel.app"),
+  robots: { index: true, follow: true, googleBot: { "max-image-preview": "large" as const } },
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION || undefined },
   openGraph: {
     title: "KEYAM SPORTS",
     description: "24/7 AI — Never Miss Anything ⚡️",
