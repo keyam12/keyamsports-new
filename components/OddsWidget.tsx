@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Icon from './Icon';
 
 const SPORTS = [
   { id: 'nba', label: 'NBA' },
@@ -49,7 +50,7 @@ export default function OddsWidget({ limit = 5 }: { limit?: number }) {
   return (
     <div className="bg-white border rounded-2xl p-5 shadow-sm">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-lg">🎲 Betting Odds</h3>
+        <h3 className="flex items-center gap-2 font-bold text-lg"><Icon name="chart" className="h-5 w-5 text-primary" /> Betting Odds</h3>
         <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Moneyline · US</span>
       </div>
       <div className="flex gap-1.5 mb-4 flex-wrap">

@@ -2,7 +2,7 @@ import { getPublishedArticles } from '../lib/articles';
 
 export default async function BreakingTicker() {
   const articles = await getPublishedArticles();
-  const text = articles[0]?.title || 'KEYAM SPORTS — 24/7 AI — Never Miss Anything ⚡️';
+  const text = articles[0]?.title || 'KEYAM SPORTS — 24/7 AI — Never Miss Anything';
   const loop = `${text}   •   ${text}   •   `;
   return (
     <div className="bg-gray-900 text-white overflow-hidden">

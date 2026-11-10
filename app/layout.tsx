@@ -12,19 +12,19 @@ const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "";
 
 export const metadata = {
   title: "KEYAM SPORTS",
-  description: "24/7 AI — Never Miss Anything ⚡️",
+  description: "24/7 AI — Never Miss Anything",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://keyamsports-new.vercel.app"),
   robots: { index: true, follow: true, googleBot: { "max-image-preview": "large" as const } },
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION || undefined },
   openGraph: {
     title: "KEYAM SPORTS",
-    description: "24/7 AI — Never Miss Anything ⚡️",
+    description: "24/7 AI — Never Miss Anything",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "KEYAM SPORTS",
-    description: "24/7 AI — Never Miss Anything ⚡️",
+    description: "24/7 AI — Never Miss Anything",
   },
 };
 

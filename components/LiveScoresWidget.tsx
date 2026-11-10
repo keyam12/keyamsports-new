@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Icon, { type IconName } from './Icon';
 
 export default function LiveScoresWidget() {
   const [games, setGames] = useState<any[]>([]);
@@ -35,7 +36,7 @@ export default function LiveScoresWidget() {
   if (games.length === 0)
     return (
       <div className="p-4 bg-white border rounded text-center text-gray-600">
-        ⚽🏀⚾🏈<br />
+        <div className="mb-2 flex justify-center gap-2 text-gray-400">{(['soccer', 'basketball', 'baseball', 'football'] as IconName[]).map(sport => <Icon key={sport} name={sport} className="h-4 w-4" />)}</div>
         <strong>{available ? "No games in the current scores feed" : "Scores are temporarily unavailable"}</strong>
         <p className="text-sm">Check back later for score updates.</p>
       </div>

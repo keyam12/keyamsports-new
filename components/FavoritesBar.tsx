@@ -1,15 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Icon, { sportIconName } from './Icon';
 
 // Favorites + keyword search for the home feed.
 // Favorites are stored in localStorage (v1 — no account needed).
 // v2 moves them to the user account when the backend adds auth.
 
 const SPORTS = [
-  { id: 'basketball', label: '🏀 Basketball' },
-  { id: 'football', label: '🏈 Football' },
-  { id: 'baseball', label: '⚾ Baseball' },
-  { id: 'soccer', label: '⚽ Soccer' },
+  { id: 'basketball', label: 'Basketball' },
+  { id: 'football', label: 'Football' },
+  { id: 'baseball', label: 'Baseball' },
+  { id: 'soccer', label: 'Soccer' },
 ];
 
 const STORAGE_KEY = 'keyam-favorites';
@@ -54,14 +55,17 @@ export default function FavoritesBar({
 
   return (
     <div className="bg-white border rounded-2xl p-4 shadow-sm mb-6">
+      <div className="relative mb-3">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Icon name="search" className="h-4 w-4" /></span>
       <input
         type="search"
         aria-label="Search headlines"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="🔍 Search headlines…"
-        className="w-full border rounded-xl px-3 py-2 text-sm mb-3 outline-none focus:ring-2 focus:ring-primary/30"
+        placeholder="Search headlines…"
+        className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
       />
+      </div>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-bold uppercase tracking-wider text-gray-400">My sports:</span>
         {SPORTS.map((s) => {
@@ -70,12 +74,15 @@ export default function FavoritesBar({
             <button
               key={s.id}
               aria-pressed={active}
+              aria-label={s.label}
               onClick={() => toggle(s.id)}
-              className={`text-xs font-bold px-3 py-1.5 rounded-full transition ${
-                active ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              className={`inline-flex items-center gap-1.5 border text-xs font-bold px-3 py-1.5 rounded-full transition ${
+                active ? 'border-primary bg-primary text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-primary/40 hover:text-primary'
               }`}
             >
-              {active ? '★ ' : ''}{s.label}
+              <Icon name={sportIconName(s.id)} className="h-4 w-4" />
+              {s.label}
+              {active && <Icon name="check" className="h-3.5 w-3.5" />}
             </button>
           );
         })}

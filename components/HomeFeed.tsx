@@ -1,5 +1,6 @@
 'use client';
 import NewsCard from './NewsCard';
+import Icon, { type IconName } from './Icon';
 import LiveScoresWidget from './LiveScoresWidget';
 import OddsWidget from './OddsWidget';
 import FavoritesBar from './FavoritesBar';
@@ -48,13 +49,13 @@ export default function HomeFeed({ initialArticles, today }: { initialArticles: 
         <p className="text-xl opacity-90 mt-4">AI-powered sports news, around the clock.</p>
         <p className="text-sm opacity-70 mt-1">Real headlines · Live scores · Zero guesswork</p>
         <div className="flex flex-wrap gap-3 mt-6">
-          <a href="#headlines" className="bg-accent text-ink font-bold px-5 py-2.5 rounded-full hover:opacity-90 transition">Ver las noticias ↓</a>
-          <a href="/odds" className="border-2 border-white/70 font-bold px-5 py-2.5 rounded-full hover:bg-white/10 transition">🎲 Ver odds</a>
+          <a href="#headlines" className="inline-flex items-center gap-2 bg-accent text-ink font-bold px-5 py-2.5 rounded-full hover:opacity-90 transition">Ver las noticias <Icon name="arrowDown" className="h-4 w-4" /></a>
+          <a href="/odds" className="inline-flex items-center gap-2 border-2 border-white/70 font-bold px-5 py-2.5 rounded-full hover:bg-white/10 transition"><Icon name="chart" className="h-4 w-4" /> Ver odds</a>
         </div>
         <div className="flex items-center gap-3 mt-8">
           <div className="flex -space-x-2">
-            {['🏀', '⚾', '⚽', '🏈'].map((e) => (
-              <span key={e} className="w-9 h-9 rounded-full bg-white text-lg flex items-center justify-center ring-2 ring-primary">{e}</span>
+            {(['basketball', 'baseball', 'soccer', 'football'] as IconName[]).map((sport) => (
+              <span key={sport} className="w-9 h-9 rounded-full bg-white text-ink flex items-center justify-center ring-2 ring-primary"><Icon name={sport} /></span>
             ))}
           </div>
           <p className="text-sm opacity-80">Todos los deportes, en un solo lugar</p>

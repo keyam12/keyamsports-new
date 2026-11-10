@@ -1,3 +1,4 @@
+import Icon from '../../components/Icon';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Baseball — KEYAM SPORTS', description: 'Latest baseball coverage from KEYAM SPORTS.', alternates: { canonical: '/baseball' } };
 import NewsCard from '../../components/NewsCard';
@@ -10,7 +11,7 @@ export default async function Baseball() {
   return (
     <div>
       <div className="bg-gradient-to-r from-red-600 to-red-800 text-white p-8 rounded-2xl shadow-lg mb-6">
-        <h1 className="text-3xl font-bold">⚾ Baseball</h1>
+        <h1 className="flex items-center gap-3 text-3xl font-bold"><Icon name="baseball" className="h-7 w-7" />Baseball</h1>
         <p className="opacity-90">Diamond headlines, powered by AI</p>
       </div>
       <div className="space-y-4">

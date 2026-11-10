@@ -1,3 +1,4 @@
+import Icon from '../../components/Icon';
 export const metadata = {
   title: "Contact — KEYAM SPORTS",
   description: "Get in touch with the KEYAM SPORTS newsroom.",
@@ -9,7 +10,7 @@ export default function Contact() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-primary text-white p-8 rounded-2xl shadow-lg mb-6">
-        <h1 className="text-3xl font-bold">📬 Contact</h1>
+        <h1 className="flex items-center gap-3 text-3xl font-bold"><Icon name="mail" className="h-7 w-7" />Contact</h1>
         <p className="opacity-90 mt-1">Tips, corrections, or partnership inquiries — we read everything.</p>
       </div>
       <div className="bg-white border rounded-2xl p-6 shadow-sm space-y-4">
