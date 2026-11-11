@@ -21,6 +21,8 @@ When Supabase returns successfully, its published results are authoritative, inc
 
 See [.env.example](.env.example). Do not commit credentials.
 
+The initial Supabase migration and import of the 13 existing publications are prepared separately. See [migration checks and rollout](docs/SUPABASE_MIGRATION.md). This migration requires production approval before sending it to `main`; preparing the file does not connect or modify the hosted database.
+
 - Retain the existing Supabase database. `supabase/articles.sql` is setup for a **new** database, not a migration to rerun blindly. No database changes are required by this stability batch.
 - Admin uses signed, expiring, HttpOnly cookies and a strong `ADMIN_PASSWORD`. Old hash cookies become invalid; sign in again. Production login requires Upstash Redis configuration for throttling and fails closed on limiter failure.
 - AI endpoints and `/agents` require an admin session. Generation additionally requires `KEYAM_ENABLE_AI=true`, an API key, verified API model IDs and a daily global run limit. The default ceiling is five runs per rolling day. This is a run cap, **not** a dollar budget; account spend controls and the later usage ledger are still required. No automated publishing or cron is configured.
