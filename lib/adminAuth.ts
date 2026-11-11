@@ -33,7 +33,16 @@ export function isAdmin(req: Request): boolean {
 // but must still authenticate; no permissive CORS headers are emitted.
 export function isTrustedOrigin(req: Request): boolean {
   const origin = req.headers.get("origin");
-  return !origin || origin === new URL(req.url).origin;
+  if (!origin) return true;
+  try {
+    const source = new URL(origin);
+    const target = new URL(req.url);
+    // Next's internal request URL can use a different hostname behind a proxy.
+    // The browser-controlled destination Host must still match the Origin;
+    // never trust arbitrary X-Forwarded-Host values for this check.
+    return source.origin === target.origin ||
+      (source.protocol === target.protocol && source.host === req.headers.get("host"));
+  } catch { return false; }
 }
 
 export function adminCookieHeader(): string {

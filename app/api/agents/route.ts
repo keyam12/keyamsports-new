@@ -2,13 +2,15 @@ import { authorizeAgentRun } from "../../../lib/agentAccess";
 // GET /api/agents — runs the agent crew and streams live progress
 // as Server-Sent Events (agent_started, agent_log, agent_done, run_done).
 // Rate limited: 10 runs per minute per IP (each run costs OpenAI tokens).
-import { runCrew } from "../../../agents/AgentRunner";
+import { randomUUID } from "node:crypto";
+import { runDraftJob } from "../../../lib/agentJobs";
 import { rateLimit, clientIp } from "../../../lib/rateLimit";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 240;
 
 export async function GET(req: Request) {
-  const denied = await authorizeAgentRun(req);
+  const denied = await authorizeAgentRun(req, false);
   if (denied) return denied;
   const rl = await rateLimit(`agents:${clientIp(req)}`, 10, 60_000);
   if (!rl.ok) {
@@ -18,33 +20,33 @@ export async function GET(req: Request) {
     });
   }
 
-  // Optional topic dedup: ?exclude=topic1|topic2 — topics the Scout must not
-  // pick again (e.g. recent drafts already delivered to the user).
-  const excludeParam = new URL(req.url).searchParams.get("exclude") ?? "";
-  const excludeTopics = excludeParam
-    .split("|")
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .slice(0, 10);
+  const suppliedKey = new URL(req.url).searchParams.get("key");
+  if (suppliedKey && !/^[a-zA-Z0-9_-]{1,80}$/.test(suppliedKey)) return Response.json({ error: "Invalid run key." }, { status: 400 });
+  const key = `console:${suppliedKey || randomUUID()}`;
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (event: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+      let connected = true;
+      const send = (event: object) => {
+        if (!connected) return;
+        try { controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`)); }
+        catch { connected = false; }
       };
       try {
-        await runCrew((e) => send({ ...e }), { excludeTopics });
+        const result = await runDraftJob(key, send);
+        if (!result.claimed) send({ type: "run_done", message: result.limited ? "Daily quota reached." : "Job already exists. Review its status in Admin.", at: new Date().toISOString() });
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[agents] Draft run failed");
+        const msg = "Draft generation or storage failed; check Admin.";
         send({
           type: "run_done",
           message: `Run failed: ${msg}`,
           at: new Date().toISOString(),
         });
       } finally {
-        controller.close();
+        if (connected) { try { controller.close(); } catch { /* client disconnected */ } }
       }
     },
   });

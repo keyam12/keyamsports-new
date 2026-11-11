@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { supabaseAdmin } from "./supabase";
 // Rate limiting for the AI endpoints (/api/agents, /api/run-agent).
 //
 // Distributed mode: when UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
@@ -6,7 +8,8 @@
 // in-memory sliding window (fine for local dev; NOT safe on serverless
 // because each instance keeps its own counters).
 //
-// failClosed=true requires Redis in production and rejects Redis failures.
+// Sensitive production requests use Redis when configured, otherwise the private
+// PostgreSQL limiter. Both reject requests on failure; memory is local/public only.
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
@@ -79,7 +82,18 @@ export async function rateLimit(
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(limit, windowMs);
   if (!limiter) {
-    if (failClosed && process.env.NODE_ENV === "production") return { ok: false, retryAfter: 60 };
+    if (failClosed && process.env.NODE_ENV === "production") {
+      try {
+        const db = supabaseAdmin();
+        if (!db) return { ok: false, retryAfter: 60 };
+        const { data, error } = await db.rpc("check_private_rate_limit", {
+          p_key: createHash("sha256").update(`${key}:${windowMs}:${limit}`).digest("hex"),
+          p_limit: limit, p_window: Math.ceil(windowMs / 1000),
+        });
+        return !error && typeof data?.ok === "boolean" && Number.isFinite(data.retryAfter)
+          ? data : { ok: false, retryAfter: 60 };
+      } catch { return { ok: false, retryAfter: 60 }; }
+    }
     if (!loggedMode) {
       loggedMode = true;
       console.warn(

@@ -43,6 +43,10 @@ test('signed admin sessions reject tampering, expiry, wrong secret and missing c
 test('administrative origin checks reject cross-origin mutations', () => {
   assert.equal(auth.isTrustedOrigin(req(null, 'https://attacker.test')), false);
   assert.equal(auth.isTrustedOrigin(req(null, 'https://keyam.test')), true);
+  const proxied = new Request('https://internal.test/admin', {headers:{host:'keyam.test',origin:'https://keyam.test'}});
+  assert.equal(auth.isTrustedOrigin(proxied),true);
+  assert.equal(auth.isTrustedOrigin(new Request('https://internal.test/admin', {headers:{host:'keyam.test',origin:'https://attacker.test','x-forwarded-host':'attacker.test'}})),false);
+  assert.equal(auth.isTrustedOrigin(req(null,'null')),false);
 });
 
 test('article validation rejects arbitrary field updates, impossible/future dates and unsafe links', () => {
@@ -253,4 +257,79 @@ test('explicit database-only mode never revives repository notes on an outage', 
     db.supabaseAnon = () => { throw new Error('fixture outage after editorial unpublishing'); };
     assert.deepEqual(await getPublishedArticles(), []);
   } finally { db.supabaseAnon = original; delete process.env.KEYAM_CONTENT_SOURCE; }
+});
+
+test('private job controls and scheduled entry reject unauthenticated requests', async () => {
+  const jobs = require('../app/api/admin/agent-jobs/route.ts');
+  const cron = require('../app/api/cron/agents/route.ts');
+  delete process.env.CRON_SECRET;
+  assert.equal((await jobs.GET(req())).status, 401);
+  assert.equal((await jobs.POST(req())).status, 401);
+  assert.equal((await cron.GET(req())).status, 401);
+  process.env.CRON_SECRET = 'local-test-secret-with-at-least-32-characters';
+  delete process.env.KEYAM_ENABLE_SCHEDULED_AGENTS;
+  const request = new Request('https://keyam.test/api/cron/agents', {headers:{authorization:`Bearer ${process.env.CRON_SECRET}`}});
+  assert.equal((await cron.GET(request)).status, 503);
+  delete process.env.CRON_SECRET;
+});
+
+test('draft persistence requires sources and never accepts a publication state', () => {
+  const { draftFromContext } = require('../lib/agentJobs.ts');
+  const ctx = {topic:'Fixture', findings:'Fixture evidence', category:'basketball', article:'Fixture title\nFixture draft', sources:['https://example.com/story?utm_source=test#part'], publicationStatus:'needs_review'};
+  const draft = draftFromContext(ctx);
+  assert.equal(draft.status,'draft');
+  assert.equal(draft.title,'Fixture title');
+  assert.deepEqual(draft.sources,['https://example.com/story']);
+  assert.throws(()=>draftFromContext({...ctx, sources:[]}));
+  assert.throws(()=>draftFromContext({...ctx, publicationStatus:'published'}));
+});
+
+test('tracked jobs persist drafts and usage, deduplicate before AI, and record failures', async()=>{
+  const database=require('../lib/supabase.ts');
+  const runner=require('../agents/AgentRunner.ts');
+  const limits=require('../lib/rateLimit.ts');
+  const {runDraftJob}=require('../lib/agentJobs.ts');
+  const {recordModelUsage}=require('../agents/usage.ts');
+  const originals={db:database.supabaseAdmin,run:runner.runCrew,limit:limits.rateLimit};
+  const names=['NEXT_PUBLIC_SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','OPENAI_API_KEY','KEYAM_ENABLE_AI',...['SCOUT','WRITER','STATS','EDITOR','SENIOR_EDITOR'].map(x=>'KEYAM_MODEL_'+x)];
+  const env=Object.fromEntries(names.map(n=>[n,process.env[n]]));
+  names.forEach(n=>process.env[n]=n==='KEYAM_ENABLE_AI'?'true':n.includes('URL')?'https://fixture.test':'test-only');
+  const calls=[]; let claimed=true; let fail=false; let runs=0;
+  database.supabaseAdmin=()=>({rpc:async(name,args)=>{
+    calls.push({name,args});
+    if(name==='claim_agent_job') return {data:{claimed,job:{id:'fixture-id',lease:'fixture-lease',state:'needs_review'}},error:null};
+    if(name==='finish_agent_job') return {data:{id:'fixture-id',state:'needs_review',article_id:'fixture-article'},error:null};
+    return {data:null,error:null};
+  }});
+  limits.rateLimit=async()=>({ok:true,retryAfter:0});
+  runner.runCrew=async()=>{
+    runs++;
+    if(fail) throw new Error('Fixture provider failure');
+    await recordModelUsage({agent:'writer',model:'fixture',inputTokens:12,outputTokens:4,incomplete:false});
+    return {topic:'Fixture',findings:'Evidence',article:'Fixture title\nFixture body',category:'soccer',sources:['https://example.com/fixture'],publicationStatus:'needs_review'};
+  };
+  try {
+    assert.equal((await runDraftJob('fixture1')).job.state,'needs_review');
+    assert.equal(calls.find(c=>c.name==='finish_agent_job').args.p_draft.status,'draft');
+    assert.equal(calls.find(c=>c.name==='record_agent_usage').args.p_usage.outputTokens,4);
+    claimed=false;
+    assert.equal((await runDraftJob('fixture1')).claimed,false);
+    assert.equal(runs,1);
+    claimed=true; fail=true;
+    await assert.rejects(runDraftJob('fixture2'),/nothing was published/);
+    assert.ok(calls.some(c=>c.name==='fail_agent_job'));
+    assert.equal(calls.filter(c=>c.name==='finish_agent_job').length,1);
+  } finally {
+    database.supabaseAdmin=originals.db; runner.runCrew=originals.run; limits.rateLimit=originals.limit;
+    for(const n of names){ if(env[n]===undefined) delete process.env[n]; else process.env[n]=env[n]; }
+  }
+});
+
+test('per-run model call and input limits bound tracked generation',async()=>{
+  const {withUsageTracking,reserveModelCall}=require('../agents/usage.ts');
+  await withUsageTracking(async()=>{},async()=>{
+    for(let i=0;i<10;i++) reserveModelCall('fixture','fixture');
+    assert.throws(()=>reserveModelCall('fixture','fixture'),/call limit/);
+  });
+  assert.throws(()=>reserveModelCall('x'.repeat(16001),'fixture'),/input limit/);
 });

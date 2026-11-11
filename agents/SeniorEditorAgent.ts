@@ -19,7 +19,7 @@ export interface StorylineCandidate {
 export async function pickTopStoryline(
   candidates: StorylineCandidate[],
   emit: EmitFn
-): Promise<Pick<RunContext, "topic" | "findings" | "sources">> {
+): Promise<Pick<RunContext, "topic" | "findings" | "sources" | "category">> {
   emit({ type: "agent_started", agent: "senior_editor", message: "Senior Editor is weighing the Scouts' storylines…" });
   await sleep(600);
 
@@ -41,7 +41,9 @@ export async function pickTopStoryline(
   const reason = raw.match(/REASON:\s*(.+)/)?.[1]?.trim() || "";
   emit({ type: "agent_log", agent: "senior_editor", message: `Picked [${chosen.sport}] ${chosen.topic}${reason ? ` — ${reason}` : ""}` });
   emit({ type: "agent_done", agent: "senior_editor", message: "Front-page story chosen." });
-  return { topic: chosen.topic, findings: chosen.findings, sources: chosen.sources ?? [] };
+  const category = { NBA: "basketball", NFL: "football", MLB: "baseball", Soccer: "soccer" }[chosen.sport] as RunContext["category"];
+  if (!category) throw new Error("Unknown story category");
+  return { topic: chosen.topic, findings: chosen.findings, sources: chosen.sources ?? [], category };
 }
 
 export interface ReviewResult {

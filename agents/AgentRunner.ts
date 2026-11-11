@@ -9,6 +9,7 @@ import { runStats } from "./StatsAgent";
 import { runEditor } from "./EditorAgent";
 import { pickTopStoryline, reviewArticle, type StorylineCandidate } from "./SeniorEditorAgent";
 import { hasApiKey } from "./llm";
+import { getPublishedArticles } from "../lib/articles";
 
 const SCOUT_SPORTS = ["NBA", "NFL", "MLB", "Soccer"];
 
@@ -42,11 +43,14 @@ export async function runCrew(
 
   // 1. Four Scouts (one per sport) search in parallel
   const candidates: StorylineCandidate[] = [];
-  await Promise.all(
+  const previous = await getPublishedArticles();
+  const excludeTopics = [...previous.map((a) => a.title), ...(opts?.excludeTopics || [])].slice(0, 30);
+  await Promise.allSettled(
     SCOUT_SPORTS.map((sport) =>
       wrap("scout", async () => {
         const { topic, findings, sources } = await runScout(emit, {
           ...opts,
+          excludeTopics,
           sport,
         });
         candidates.push({ sport, topic, findings, sources });
@@ -54,16 +58,21 @@ export async function runCrew(
     )
   );
 
+  if (!candidates.length) throw new Error("No source candidates available");
+  // All scouts have settled before recording failure or saving a final draft.
+  // A league feed outage need not prevent coverage of another league.
+
   // 2. Senior Editor picks the front-page storyline
   await wrap("senior_editor", async () => {
-    const { topic, findings, sources } = await pickTopStoryline(candidates, emit);
+    const { topic, findings, sources, category } = await pickTopStoryline(candidates, emit);
     ctx.topic = topic;
+    ctx.category = category;
     ctx.findings = findings;
     ctx.sources = sources;
   });
 
   // 3. Writer and Stats work in parallel
-  await Promise.all([
+  const writingResults = await Promise.allSettled([
     wrap("writer", async () => {
       ctx.recap = await runWriter(ctx, emit);
     }),
@@ -71,6 +80,9 @@ export async function runCrew(
       ctx.stats = await runStats(ctx, emit);
     }),
   ]);
+
+  const failedWriting = writingResults.find((result) => result.status === "rejected");
+  if (failedWriting?.status === "rejected") throw failedWriting.reason;
 
   // 4. Editor assembles the final article
   await wrap("editor", async () => {

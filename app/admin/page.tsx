@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import AgentJobsPanel from './AgentJobsPanel';
 
 interface Article {
   id: string;
@@ -22,6 +23,7 @@ export default function AdminPage() {
   const [configured, setConfigured] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ category: 'basketball', title: '', summary: '', sources: '', status: 'draft' as 'draft' | 'published' });
 
   async function load() {
@@ -93,11 +95,12 @@ export default function AdminPage() {
     e.preventDefault();
     if (!form.title.trim()) return;
     const res = await fetch('/api/admin/articles', {
-      method: 'POST',
+      method: editingId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, sources: form.sources.split('\n').map((source) => source.trim()).filter(Boolean) }),
+      body: JSON.stringify({ ...(editingId ? {id:editingId} : {}), ...form, sources: form.sources.split('\n').map((source) => source.trim()).filter(Boolean) }),
     });
     if (res.ok) {
+      setEditingId(null);
       setForm({ category: 'basketball', title: '', summary: '', sources: '', status: 'draft' });
       load();
     } else {
@@ -153,8 +156,7 @@ export default function AdminPage() {
           <p className="font-bold mb-1">Database not connected yet</p>
           <p className="text-gray-600">
             Existing repository publications remain visible while the database is disconnected. To publish from this panel:
-            create a free project at supabase.com, run <code>supabase/articles.sql</code> in its SQL
-            Editor, then add <code>NEXT_PUBLIC_SUPABASE_URL</code>,{' '}
+            apply the reviewed repository migrations to the existing Supabase project, then add <code>NEXT_PUBLIC_SUPABASE_URL</code>,{' '}
             <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code>{' '}
             to the Vercel env vars (and redeploy).
           </p>
@@ -163,8 +165,10 @@ export default function AdminPage() {
 
       {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}
 
+      <AgentJobsPanel onSaved={load} />
+
       <div className="bg-white border rounded-2xl p-5 shadow-sm">
-        <h2 className="font-bold mb-3">New article</h2>
+        <h2 id="article-form-title" className="font-bold mb-3">{editingId ? 'Edit article' : 'New article'}</h2>
         <form onSubmit={create} className="space-y-3">
           <div className="flex gap-2">
             <select
@@ -203,6 +207,7 @@ export default function AdminPage() {
           <textarea value={form.sources} onChange={(e) => setForm({ ...form, sources: e.target.value })} placeholder="Source URLs — one HTTPS URL per line" aria-label="Source URLs" rows={3} className="w-full border rounded-xl px-3 py-2 text-sm" />
           <p className="text-xs text-gray-500">Publishing confirms you have checked the facts and sources. Sensitive or conflicting claims require human editorial review.</p>
           <button className="bg-primary text-white font-bold px-4 py-2 rounded-xl text-sm">Save article</button>
+          {editingId && <button type="button" onClick={() => { setEditingId(null); setForm({category:'basketball',title:'',summary:'',sources:'',status:'draft'}); }} className="text-primary text-sm font-bold ml-3">Cancel edit</button>}
         </form>
       </div>
 
@@ -241,6 +246,11 @@ export default function AdminPage() {
                   {(a.sources || []).map((source) => <li key={source}><a href={source} target="_blank" rel="noopener noreferrer" className="break-all hover:underline">{source}</a></li>)}
                 </ul>
                 <div className="flex gap-3 mt-2">
+                  <button onClick={() => {
+                    setEditingId(a.id);
+                    setForm({category:a.category,title:a.title,summary:a.summary,sources:(a.sources || []).join('\n'),status:a.status});
+                    document.getElementById('article-form-title')?.scrollIntoView({block:'start'});
+                  }} className="text-xs font-bold text-primary hover:underline">Edit</button>
                   {a.status === 'draft' ? (
                     <button onClick={() => setStatus(a, 'published')} className="text-xs font-bold text-green-600 hover:underline">
                       Publish

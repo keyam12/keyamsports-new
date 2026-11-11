@@ -137,7 +137,7 @@ export default function AgentsPage() {
     setStartedAt(Date.now());
     setElapsed(0);
 
-    const src = new EventSource('/api/agents');
+    const src = new EventSource(`/api/agents?key=${crypto.randomUUID()}`);
     src.onmessage = (m) => {
       try {
         const ev = JSON.parse(m.data) as AgentEvent;

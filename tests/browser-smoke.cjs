@@ -11,14 +11,16 @@ const rows = [
 ];
 const fixture = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
+  if (req.url.startsWith('/rest/v1/rpc/check_private_rate_limit')) return res.end(JSON.stringify({ok:true,retryAfter:0}));
+  if (req.url.startsWith('/rest/v1/agent_jobs')) return res.end('[]');
   res.end(JSON.stringify(rows));
 });
 const base = 'http://127.0.0.1:3100';
 (async () => {
   await new Promise((resolve) => fixture.listen(4010, '127.0.0.1', resolve));
-  const app = spawn('npm', ['run', 'start', '--', '-p', '3100'], {
+  const app = spawn('npm', ['run', 'start', '--', '-p', '3100', '-H', '127.0.0.1'], {
     cwd: path.resolve(__dirname, '..'),
-    env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:4010', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-fixture-only', SUPABASE_SERVICE_ROLE_KEY: '', THESPORTSDB_API_KEY: '', KEYAM_ENABLE_AI: 'false', ADMIN_PASSWORD: '' },
+    env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:4010', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-fixture-only', SUPABASE_SERVICE_ROLE_KEY: 'local-fixture-only', UPSTASH_REDIS_REST_URL: '', UPSTASH_REDIS_REST_TOKEN: '', THESPORTSDB_API_KEY: '', KEYAM_ENABLE_AI: 'false', ADMIN_PASSWORD: 'local-browser-fixture-only' },
     stdio: ['ignore', 'pipe', 'pipe'], detached: true,
   });
   let logs = '';
@@ -38,6 +40,8 @@ const base = 'http://127.0.0.1:3100';
     for (const route of ['agents', 'run-agent', 'injury-report']) {
       assert.equal((await fetch(`${base}/api/${route}`)).status, 401);
     }
+    assert.equal((await fetch(`${base}/api/admin/agent-jobs`)).status, 401);
+    assert.equal((await fetch(`${base}/api/cron/agents`)).status, 401);
     const scores = await (await fetch(`${base}/api/live-scores`)).json();
     assert.deepEqual(scores.results, []);
     assert.equal(scores.live, false);
@@ -89,12 +93,25 @@ const base = 'http://127.0.0.1:3100';
     }
     await page.goto(`${base}/admin`);
     assert.ok((await page.locator('meta[name="robots"]').getAttribute('content')).includes('noindex'));
-    await page.getByRole('textbox', { name: 'Admin password' }).count();
+    console.log('Browser: admin login loaded');
+    await page.getByLabel('Admin password').fill('local-browser-fixture-only');
+    const loginResponse = page.waitForResponse(response => response.url().endsWith('/api/admin/login'));
+    await page.getByRole('button', { name: 'Enter', exact: true }).click();
+    console.log('Browser: admin login submitted');
+    const loggedIn = await loginResponse;
+    assert.equal(loggedIn.status(),200);
+    console.log('Browser: admin login succeeded');
+    await page.getByRole('heading', { name: 'Editorial automation', exact: true }).waitFor();
+    await page.getByText('Configuration required', { exact: false }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Prepare news draft', exact: true }).isDisabled(), true);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'admin has no mobile overflow');
+    await page.screenshot({path:'/tmp/keyam-verification/admin-agents.png',fullPage:true});
     assert.deepEqual(errors, [], 'no browser runtime errors');
     console.log('PASS: server-rendered feed; private AI endpoints; no fake scores; sitemap/robots; desktop/mobile; search/favorites; four league routes; private-page noindex. Line-icon UI without emojis; screenshots: /tmp/keyam-verification');
-  } finally {
+  } catch(error) { console.error('Browser failure:',error); throw error; } finally {
     if (browser) await browser.close();
     process.kill(-app.pid, 'SIGTERM');
+    fixture.closeAllConnections();
     await new Promise((resolve) => fixture.close(resolve));
   }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

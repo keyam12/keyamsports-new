@@ -32,14 +32,14 @@ export async function runEditor(
 
   const sourcesBlock =
     ctx.sources && ctx.sources.length > 0
-      ? `\n\n🔗 Fuentes:\n${ctx.sources.map((s) => `- ${s}`).join("\n")}`
+      ? `\n\nSources:\n${ctx.sources.map((s) => `- ${s}`).join("\n")}`
       : "";
 
   const article =
-    `🏆 ${headline}\n` +
+    `${headline}\n` +
     `KEYAM SPORTS • ${date}\n\n` +
     `${ctx.recap}\n\n` +
-    `📊 Key Stat: ${ctx.stats}` +
+    `Key statistic: ${ctx.stats}` +
     sourcesBlock +
     demoNote;
 

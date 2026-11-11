@@ -25,6 +25,7 @@ export type EmitFn = (event: Omit<AgentEvent, "at">) => void;
 export interface RunContext {
   /** Topic chosen by the scout */
   topic: string;
+  category?: "basketball" | "football" | "baseball" | "soccer";
   /** Raw findings from the scout */
   findings: string;
   /** Recap written by the writer */
@@ -35,7 +36,7 @@ export interface RunContext {
   article: string;
   /** Source URLs behind the chosen storyline (from the Scout) */
   sources?: string[];
-  /** True when no OPENAI_API_KEY is set — agents use demo content */
+  /** Legacy compatibility flag; production generation never uses simulated news */
   demo: boolean;
   /** AI review is advisory; a human must approve publication. */
   publicationStatus: "needs_review";
