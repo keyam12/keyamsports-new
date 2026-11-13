@@ -11,8 +11,12 @@ export function safeEqual(a: string, b: string): boolean {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+export function adminPassword(): string | undefined {
+  return process.env.ADMIN_PASSWORD_2 || process.env.ADMIN_PASSWORD;
+}
+
 function signature(value: string): string | null {
-  const secret = process.env.ADMIN_PASSWORD;
+  const secret = adminPassword();
   return secret ? createHmac("sha256", secret).update(`keyam-session:${value}`).digest("hex") : null;
 }
 

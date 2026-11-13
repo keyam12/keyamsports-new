@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { safeEqual, adminCookieHeader, isTrustedOrigin } from "../../../../lib/adminAuth";
+import { safeEqual, adminCookieHeader, isTrustedOrigin, adminPassword } from "../../../../lib/adminAuth";
 import { rateLimit, clientIp } from "../../../../lib/rateLimit";
 
 export async function POST(req: Request) {
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   if (!rl.ok) return NextResponse.json({ error: "Too many attempts or limiter unavailable." }, {
     status: 429, headers: { "Retry-After": String(rl.retryAfter) },
   });
-  const expected = process.env.ADMIN_PASSWORD;
+  const expected = adminPassword();
   if (!expected) return NextResponse.json({ error: "Admin authentication is not configured." }, { status: 503 });
   let body: unknown;
   try { body = await req.json(); } catch {

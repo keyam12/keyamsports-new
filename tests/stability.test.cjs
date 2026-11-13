@@ -333,3 +333,29 @@ test('per-run model call and input limits bound tracked generation',async()=>{
   });
   assert.throws(()=>reserveModelCall('x'.repeat(16001),'fixture'),/input limit/);
 });
+
+
+test('preferred admin password overrides the legacy value for login and signed sessions', async () => {
+  const original = { first: process.env.ADMIN_PASSWORD, second: process.env.ADMIN_PASSWORD_2, mode: process.env.NODE_ENV };
+  const { POST } = require('../app/api/admin/login/route.ts');
+  process.env.NODE_ENV = 'development';
+  process.env.ADMIN_PASSWORD = 'legacy-fixture-only';
+  process.env.ADMIN_PASSWORD_2 = 'preferred-fixture-only';
+  const request = password => new Request('https://keyam.test/api/admin/login', { method: 'POST', headers: {'content-type':'application/json','x-forwarded-for':'preferred-password-test'}, body: JSON.stringify({password}) });
+  try {
+    assert.equal((await POST(request('legacy-fixture-only'))).status,401);
+    const response = await POST(request('preferred-fixture-only'));
+    assert.equal(response.status,200);
+    const cookie = response.headers.get('set-cookie').split(';')[0];
+    assert.equal(auth.isAdmin(req(cookie)),true);
+    process.env.ADMIN_PASSWORD = 'another-unused-legacy-value';
+    assert.equal(auth.isAdmin(req(cookie)),true);
+    delete process.env.ADMIN_PASSWORD_2;
+    assert.equal(auth.isAdmin(req(cookie)),false);
+    assert.equal(auth.adminPassword(),'another-unused-legacy-value');
+  } finally {
+    for (const [key,value] of [['ADMIN_PASSWORD',original.first],['ADMIN_PASSWORD_2',original.second],['NODE_ENV',original.mode]]) {
+      if(value===undefined) delete process.env[key]; else process.env[key]=value;
+    }
+  }
+});
