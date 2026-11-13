@@ -70,3 +70,17 @@ export async function complete(prompt: string, system?: string): Promise<string>
 }
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Read-only account/model check; performs no text generation. */
+export async function verifyConfiguredModels() {
+  const ids = [...new Set((["scout", "writer", "stats", "editor", "senior_editor"] as AgentId[]).map(modelFor))];
+  return Promise.all(ids.map(async (id) => {
+    try {
+      const model = await getClient().models.retrieve(id);
+      return { id: model.id, available: true, error: null };
+    } catch (error) {
+      const status = error instanceof OpenAI.APIError ? error.status : undefined;
+      return { id, available: false, error: status ? `PROVIDER_HTTP_${status}` : "PROVIDER_UNAVAILABLE" };
+    }
+  }));
+}

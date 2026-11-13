@@ -359,3 +359,23 @@ test('preferred admin password overrides the legacy value for login and signed s
     }
   }
 });
+
+test('scheduler diagnostics are private, read-only, and do not require enabling the schedule',async()=>{
+  const diagnostics=require('../lib/agentDiagnostics.ts');
+  const original=diagnostics.agentDiagnostics;
+  const originalSecret=process.env.CRON_SECRET;
+  const cron=require('../app/api/cron/agents/route.ts');
+  const secret='fixture-scheduler-key-with-at-least-32-characters';
+  process.env.CRON_SECRET=secret;
+  let checks=0;
+  diagnostics.agentDiagnostics=async()=>{checks++;return {ok:true,databaseReady:true};};
+  try {
+    assert.equal((await cron.GET(new Request('https://keyam.test/api/cron/agents?mode=check'))).status,401);
+    assert.equal(checks,0);
+    const response=await cron.GET(new Request('https://keyam.test/api/cron/agents?mode=check',{headers:{authorization:`Bearer ${secret}`}}));
+    assert.equal(response.status,200);
+    assert.equal((await response.json()).databaseReady,true);
+    assert.equal(checks,1);
+    assert.equal((await cron.GET(new Request('https://keyam.test/api/cron/agents?mode=unknown',{headers:{authorization:`Bearer ${secret}`}}))).status,400);
+  } finally {diagnostics.agentDiagnostics=original;if(originalSecret===undefined)delete process.env.CRON_SECRET;else process.env.CRON_SECRET=originalSecret;}
+});

@@ -40,3 +40,8 @@ No new paid dependency is provisioned. PGlite is a free development-only Postgre
 ## Verification
 
 `npm test` covers auth, disabled scheduling, draft validation, persistence/usage, duplicate-before-generation, failure recording and input/call caps plus existing regressions. `npm run test:db` exercises both real SQL migrations in local PGlite, RLS/grants, lease fencing, atomic draft insertion, duplicate suppression, daily limits, three-attempt retries and the shared database limiter. `npm run build` validates Next compilation/types. Local SQL tests and successful deployment checks do not substitute for authenticated hosted-database and real-model verification.
+
+
+## Activation checks
+
+The secret-protected scheduler supports `?mode=check` for read-only diagnostics (configured-model access, source availability, published row count, private-job store and latest editorial result). It performs no text generation and consumes no run quota. `?mode=test` runs the same bounded daily draft job while scheduling is still disabled; it retains production-only, bearer, AI, database and quota checks. It shares the daily key with the eventual cron, so enabling the schedule cannot repeat that day's completed work. Neither mode publishes articles.
