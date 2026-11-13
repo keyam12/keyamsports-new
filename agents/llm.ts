@@ -51,6 +51,8 @@ export async function completeFor(
   try {
     res = await getClient().chat.completions.create({
       model, max_completion_tokens: 1800,
+      // This focused model supports none; reserve the output budget for the draft.
+      ...(model.startsWith("gpt-6-luna") ? { reasoning_effort: "none" as const } : {}),
       messages: [{ role: "system", content: instruction }, { role: "user", content: prompt }],
     });
   } catch (error) {
