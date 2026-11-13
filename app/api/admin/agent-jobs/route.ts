@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const db = supabaseAdmin();
   if (!db) return Response.json({ readiness, jobs: [], storageReady: false }, { headers });
   const { data, error } = await db.from("agent_jobs")
-    .select("id,job_key,state,attempts,article_id,error_code,input_tokens,output_tokens,usage_incomplete,created_at,updated_at,lease_until,context")
+    .select("id,job_key,state,attempts,article_id,error_code,input_tokens,output_tokens,usage_incomplete,created_at,updated_at,lease_until,context,agent_publications(state,risk_tier,reasons,public_url,verified_at)")
     .order("updated_at", { ascending: false }).limit(20);
   if (error) console.error("[agent-jobs] Private history unavailable");
   return Response.json({ readiness, jobs: (data || []).map(job => ({ ...job, context: job.context ? {
@@ -31,6 +31,6 @@ export async function POST(req: Request) {
     return Response.json(result, { status: result.limited ? 429 : 200, headers });
   } catch {
     console.error("[agent-jobs] Draft request failed");
-    return Response.json({ error: "Draft run failed. Review job history; nothing was published." }, { status: 503, headers });
+    return Response.json({ error: "Draft run failed. Review job history; consult the private publication audit." }, { status: 503, headers });
   }
 }

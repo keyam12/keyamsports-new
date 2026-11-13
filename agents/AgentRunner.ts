@@ -11,6 +11,9 @@ import { pickTopStoryline, reviewArticle, type StorylineCandidate } from "./Seni
 import { hasApiKey } from "./llm";
 import { getPublishedArticles } from "../lib/articles";
 
+import { researchStory } from "./ResearchAgent";
+import { publicationDecision } from "../lib/editorialPolicy";
+
 const SCOUT_SPORTS = ["NBA", "NFL", "MLB", "Soccer"];
 
 export async function runCrew(
@@ -71,6 +74,12 @@ export async function runCrew(
     ctx.sources = sources;
   });
 
+  ctx.research = await researchStory(ctx.sources || [], ctx.topic);
+  if (ctx.research.evidence.length) {
+    ctx.findings = ctx.research.evidence.map(e => `Source: ${e.url}\n${e.text}`).join("\n\n").slice(0, 11000);
+    ctx.sources = ctx.research.evidence.map(e => e.url);
+  }
+
   // 3. Writer and Stats work in parallel
   const writingResults = await Promise.allSettled([
     wrap("writer", async () => {
@@ -89,12 +98,17 @@ export async function runCrew(
     ctx.article = await runEditor(ctx, emit);
   });
 
-  // 5. Automated review is advisory; human approval is still required.
-  const review = await reviewArticle(ctx, emit);
+  // 5. Verify the evidence and classify the risk before the separate publisher.
+  let review = await reviewArticle(ctx, emit);
+  if (review.verdict === "NEEDS_FIXES") {
+    ctx.article = review.article;
+    review = await reviewArticle(ctx, emit); // One corrected version, then HOLD if still not approved.
+  }
   ctx.article = review.article;
   ctx.seniorEditorVerdict = review.verdict;
   ctx.seniorEditorNotes = review.notes;
+  ctx.automation = publicationDecision({topic:ctx.topic,article:ctx.article,verdict:review.verdict,assessment:review.assessment,research:ctx.research});
 
-  emit({ type: "run_done", message: "Draft complete. Human editorial review required; nothing was published.", payload: ctx });
+  emit({ type: "run_done", message: "Editorial preparation complete. Automatic publication policy will evaluate the stored result.", payload: ctx });
   return ctx;
 }

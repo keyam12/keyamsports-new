@@ -1,0 +1,30 @@
+# Automatic publication without a Publish click
+
+User authorization: automatically publish approved Tier 1/2 stories; retain Tier 3, uncertain and conflicting reports; do not change credentials, hosting configuration or existing published articles. The existing daily schedule, model IDs, credentials and run ceiling are retained. Publication is now a policy decision in the worker, not a required human action.
+
+## Execution
+
+1. Honor `PAUSE_PUBLISHING=true` before claiming work and before publishing. It is read only; this change does not set or alter environment variables.
+2. Use the existing PostgreSQL job queue, unique daily key and leased claims. Vercel functions have ephemeral filesystems: `/state/queue.json` and `/state/lock` are not silently recreated on disk. Durable job records/leases implement that state in the already connected database. The previous instruction's nonexistent `/state` must not disable the established scheduled system. This conservative architecture decision is recorded here.
+3. Scouts identify a recent story within the existing daily run budget. Research fetches the cited pages and at most two primary links from those pages. HTTPS domain allowlists, bounded redirects, body limits and timeouts restrict retrieval. Relevant article/main content and a fresh relevant primary source are required for automatic publication; headlines, navigation and an LLM's memory are insufficient. The initial primary-domain list covers major leagues and a few clubs; unsupported sites, inaccessible pages or missing primary links lead to a hold, not a fabricated confirmation. This is intentionally narrow coverage, not a guarantee every daily story will publish.
+4. Writer, Stats and Editor use the research evidence. Senior Editor checks claims, chooses APPROVE/REVISE/HOLD and assigns a risk tier. One corrected version can receive a second review. Still-unapproved or incomplete results are held.
+5. The deterministic gate requires explicit approval, all claims supported, no contradictions, fresh primary evidence and an eligible type. Tier 1 covers routine confirmed results/previews/performances; Tier 2 covers routine official team updates. Rumors, injuries/health, allegations, criminal/legal matters and sensitive claims are always held. Model approval alone cannot bypass the gate.
+6. The worker saves a draft and evidence first, then calls a service-only PostgreSQL publication RPC. It locks the job and target article, checks the persisted decision and unchanged article fields and changes **only that ID** to published. Old drafts without the new evidence/decision structure are not retrospectively published. Duplicate stories are not republished. No existing publication is deleted, unpublished or rewritten by this migration.
+7. Published articles have server-rendered `/news/<headline>-<uuid>` pages with canonical metadata, source links, AI disclosure and NewsArticle JSON-LD. Existing card styling is preserved; only headline links are added. Sitemaps include the public articles.
+8. Verify the URL returns HTTP 200 and the exact article's rendered ID. The verification budget is three attempts total (initial + two retries), stored atomically in PostgreSQL; backoff is 250ms then 500ms. Verification failures are marked failed with a private alert; the article is not deleted or bulk-unpublished. Pending verification after a process interruption can resume without another model call; exhausted failures remain failed.
+
+`agent_publications` is the publication audit; `agent_alerts` records holds and failures. Both are private and service-role only, exposed to the authenticated admin panel through the existing server route. These replace ephemeral `/state/hold` and `/state/alerts.md` in production. The panel remains optional for Tier 1/2 publication and useful for inspecting holds.
+
+## Limits and reliability
+
+The existing schedule remains one editorial run daily at 12:00 UTC. Holding an unsupported event is a successful conservative decision; it does not produce filler. This change does not expand the daily quota, turn on extra paid services or promise 24-hour continuous discovery throughput.
+
+The generation tracker stops starting new model calls when its 140-second execution budget cannot accommodate another 30-second call. The route remains bounded at 240 seconds (stricter than 15 minutes). Database leases expire after ten minutes if the platform kills a function; in-process failures are recorded immediately. Platform termination cannot guarantee a final log write. This is a bounded serverless worker, not a durable all-events queue engine. It still selects one story from recent feeds per scheduled run; it does not claim to drain all sports events since a cursor. Independent reports of the same event with different URLs may still need stronger semantic deduplication.
+
+Source retrieval/public endpoint availability does not confer commercial rights to provider media or allow copying entire articles. Public articles remain original short writing with factual attribution, no third-party photographs/videos are added, and research excerpts remain private. Provider commercial terms remain a separate requirement for expanding integrations.
+
+## Checks
+
+`npm test` tests evidence URL safety, source relevance, missing/stale-primary holds, sensitive-claim holds, strict editor approval, pause behavior and public article verification along with earlier regressions. `npm run test:db` executes all migrations in local PostgreSQL and verifies one-ID publication, idempotence, durable verification limits, private grants/RLS and retained old/unsafe drafts. `npm run build` verifies types and server routes. `node tests/browser-smoke.cjs` covers the existing public design, mobile layout, source links, public article pages/canonical metadata and private administration.
+
+Live publication must be distinguished from these fixture tests. A successful deployment and policy configuration do not mean a fresh real Tier 1/2 event has passed research and been automatically published. That result must be checked through the stored publication audit and public URL.

@@ -9,11 +9,11 @@ export async function GET(req: Request) {
   if (denied) return denied;
   try {
     const result = await runDraftJob(`legacy:${randomUUID()}`);
-    return Response.json({ ok: true, text: result.context?.article, status: "needs_review", sources: result.context?.sources, job: result.job }, {
+    return Response.json({ ok: true, text: result.context?.article, status: result.publication?.state || "needs_review", sources: result.context?.sources, job: result.job }, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch {
     console.error("[run-agent] Draft generation failed");
-    return Response.json({ ok: false, error: "Draft generation failed. No content was published." }, { status: 503 });
+    return Response.json({ ok: false, error: "Draft generation failed. Consult the private publication audit." }, { status: 503 });
   }
 }

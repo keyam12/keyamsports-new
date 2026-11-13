@@ -169,7 +169,7 @@ export default function AgentsPage() {
             </span>
           )}
         </div>
-        <p className="text-lg">AI-assisted drafts for editorial review. Runs do not publish articles.</p>
+        <p className="text-lg">Automated newsroom: verified Tier 1/2 stories publish after Senior Editor approval. Uncertain or sensitive stories are retained.</p>
         <div className="mt-3 flex items-center justify-center gap-3 text-sm">
           {demo !== null && (
             <span className="inline-block px-3 py-1 rounded-full font-semibold bg-white/20">

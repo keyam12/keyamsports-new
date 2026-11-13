@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 const migration = name => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url),'utf8');
 const setup = migration('20261111090000_initial_articles.sql');
-const jobs = migration('20261111095000_agent_drafts.sql');
+const jobs = migration('20261111095000_agent_drafts.sql')+migration('20261113140000_autonomous_publication.sql');
 const db = new PGlite();
 await db.exec('create role anon; create role authenticated; create role service_role bypassrls; begin;'+setup+jobs+'commit;');
 const rpc = async (name,args) => (await db.query(`select public.${name}(${args.map((_,i)=>`$${i+1}`).join(',')}) as result`,args)).rows[0].result;
@@ -82,5 +82,49 @@ test('database limiter shares counts and resets an expired window',async()=>{
  assert.equal(blocked.ok,false); assert.ok(blocked.retryAfter>0);
  await db.query("update private_rate_limits set expires_at=now()-interval '1 second' where key_hash=$1",[key]);
  assert.equal((await rpc('check_private_rate_limit',[key,1,60])).ok,true);
+});
+
+test('autonomous approval publishes only the selected verified Tier 1/2 article',async()=>{
+ const claim=await rpc('claim_agent_job',['auto-publish-fixture',100]);
+ const body='Local approved headline\nVerified local fixture text only.';
+ const context={publicationStatus:'needs_review',article:body,seniorEditorVerdict:'APPROVED',research:{primaryVerified:true,evidence:[{primary:true,relevant:true,checkedAt:new Date().toISOString()}]},category:'basketball',sources:['https://nba.com/news/test-publication-fixture'],automation:{decision:'APPROVE',riskTier:1,allClaimsSupported:true,contradictions:false,reasons:[]}};
+ const fixture={...draft,title:'Local approved headline',summary:body,sources:['https://nba.com/news/test-publication-fixture']};
+ const finished=await rpc('finish_agent_job',[claim.job.id,claim.job.lease,context,fixture]);
+ const url='https://keyamsports-new.vercel.app/news/fixture-'+finished.article_id;
+ const publication=await rpc('decide_agent_publication',[claim.job.id,url]);
+ assert.equal(publication.state,'pending');
+ assert.equal(await rpc('reserve_publication_verification',[claim.job.id]),true);
+ assert.equal(await rpc('reserve_publication_verification',[claim.job.id]),true);
+ assert.equal(await rpc('reserve_publication_verification',[claim.job.id]),true);
+ assert.equal(await rpc('reserve_publication_verification',[claim.job.id]),false);
+ assert.equal((await db.query('select status from articles where id=$1',[finished.article_id])).rows[0].status,'published');
+ assert.equal((await db.query("select count(*)::int as n from articles where status='published'")).rows[0].n,14);
+ assert.equal((await rpc('decide_agent_publication',[claim.job.id,url])).state,'pending');
+ await rpc('verify_agent_publication',[claim.job.id,true]);
+ assert.equal((await rpc('decide_agent_publication',[claim.job.id,url])).state,'published');
+ assert.equal((await rpc('verify_agent_publication',[claim.job.id,false])).state,'published');
+ assert.equal((await db.query("select count(*)::int as n from agent_alerts where job_id=$1 and code='PUBLIC_URL_FAILED'",[claim.job.id])).rows[0].n,0);
+});
+test('high risk, missing primary evidence and legacy drafts remain unpublished with alerts',async()=>{
+ for(const [index,context] of [
+   {publicationStatus:'needs_review',seniorEditorVerdict:'APPROVED',automation:{decision:'APPROVE',riskTier:3,allClaimsSupported:true,contradictions:false},research:{primaryVerified:true}},
+   {publicationStatus:'needs_review',seniorEditorVerdict:'APPROVED',automation:{decision:'APPROVE',riskTier:1,allClaimsSupported:true,contradictions:false},research:{primaryVerified:false}},
+   {publicationStatus:'needs_review'},
+ ].entries()){
+   const claim=await rpc('claim_agent_job',['held-'+index,100]);
+   const fixture={...draft,title:'Held local fixture '+index,summary:'Held local fixture '+index+'\nEvidence requires retention.',sources:['https://nba.com/news/held-fixture-'+index]};
+   context.article=fixture.summary;
+   const finished=await rpc('finish_agent_job',[claim.job.id,claim.job.lease,context,fixture]);
+   assert.equal((await rpc('decide_agent_publication',[claim.job.id,'https://keyamsports-new.vercel.app/news/fixture-'+finished.article_id])).state,'hold');
+   assert.equal((await db.query('select status from articles where id=$1',[finished.article_id])).rows[0].status,'draft');
+   assert.equal((await db.query('select count(*)::int as n from agent_alerts where job_id=$1',[claim.job.id])).rows[0].n,1);
+ }
+});
+test('public roles cannot approve articles or read internal publication alerts',async()=>{
+ await db.exec('reset role; set role anon;');
+ await assert.rejects(db.query('select * from agent_publications'),/permission denied/);
+ await assert.rejects(db.query('select * from agent_alerts'),/permission denied/);
+ await assert.rejects(rpc('decide_agent_publication',['00000000-0000-4000-8000-000000000000','https://example.com']),/permission denied/);
+ await db.exec('reset role; set role service_role;');
 });
 test.after(async()=>{await db.close();});

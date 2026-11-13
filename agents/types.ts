@@ -26,6 +26,8 @@ export interface RunContext {
   /** Topic chosen by the scout */
   topic: string;
   category?: "basketball" | "football" | "baseball" | "soccer";
+  research?: import("./ResearchAgent").Research;
+  automation?: import("../lib/editorialPolicy").EditorialDecision;
   /** Raw findings from the scout */
   findings: string;
   /** Recap written by the writer */
@@ -38,7 +40,7 @@ export interface RunContext {
   sources?: string[];
   /** Legacy compatibility flag; production generation never uses simulated news */
   demo: boolean;
-  /** AI review is advisory; a human must approve publication. */
+  /** Draft persistence precedes the separate verified Tier 1/2 publication gate. */
   publicationStatus: "needs_review";
   /** Senior Editor's final verdict: APPROVED or NEEDS_FIXES */
   seniorEditorVerdict?: string;

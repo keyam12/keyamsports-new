@@ -1,3 +1,5 @@
+> The draft-only workflow described below is superseded by [automatic low-risk publication](AUTONOMOUS_PUBLICATION.md). Human Publish is no longer required for verified, approved Tier 1/2 stories; unsupported or sensitive stories are retained automatically. Existing schedule and credentials are unchanged.
+
 # Persisted editorial drafts
 
 The existing crew now saves its generated work through the private PostgreSQL job store. `/admin` includes configuration status, a draft-run button, history, attempts, reported token totals and editorial review notes. Existing public branding/layout remains unchanged. This stage creates **drafts only**; it does not provide independent reporting, licensed media discovery or automatic publication.

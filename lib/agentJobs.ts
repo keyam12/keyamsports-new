@@ -6,6 +6,8 @@ import { validateArticleInput, isSourceUrl } from "./articleValidation";
 import { rateLimit } from "./rateLimit";
 import type { AgentEvent, RunContext } from "../agents/types";
 
+import { publishPreparedJob, resumePublication } from "./autoPublisher";
+
 const requiredModels = ["scout", "writer", "stats", "editor", "senior_editor"] as const;
 export function agentReadiness() {
   const missing = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"].filter((key) => !process.env[key]);
@@ -40,6 +42,7 @@ export function draftFromContext(ctx: RunContext) {
 }
 
 export async function runDraftJob(key: string, emit?: (event: AgentEvent) => void) {
+  if (process.env.PAUSE_PUBLISHING === "true") return {claimed:false,limited:false,paused:true,job:null};
   const readiness = agentReadiness();
   if (!readiness.ready) throw new Error("Agent setup incomplete");
   if (!/^[a-zA-Z0-9:_-]{1,100}$/.test(key)) throw new Error("Invalid job key");
@@ -47,8 +50,11 @@ export async function runDraftJob(key: string, emit?: (event: AgentEvent) => voi
   if (!db) throw new Error("Database unavailable");
   const { data: claim, error: claimError } = await db.rpc("claim_agent_job", { p_key: key, p_limit: readiness.dailyRunLimit });
   if (claimError || !claim) throw new Error("Agent job store unavailable");
-  if (!claim.claimed) return { claimed: false, limited: !!claim.limited,
+  if (!claim.claimed) {
+    const publication = claim.job?.state === "needs_review" ? await resumePublication(claim.job.id) : null;
+    return {publication, claimed: false, limited: !!claim.limited,
     job: claim.job ? { id: claim.job.id, state: claim.job.state, article_id: claim.job.article_id } : null };
+  }
   const job = claim.job;
   try {
     const quota = await rateLimit(`ai:global:daily:${new Date().toISOString().slice(0, 10)}`, readiness.dailyRunLimit, 86_400_000, true);
@@ -60,11 +66,12 @@ export async function runDraftJob(key: string, emit?: (event: AgentEvent) => voi
     const draft = draftFromContext(ctx);
     const { data, error } = await db.rpc("finish_agent_job", { p_id: job.id, p_lease: job.lease, p_context: ctx, p_draft: draft });
     if (error || !data) throw new Error("Draft storage failed");
-    emit?.({ type: "run_done", at: new Date().toISOString(), message: data.state === "duplicate" ? "Story already exists; no duplicate article saved." : "Draft saved for human review; nothing was published.", payload: ctx });
-    return { context: ctx, claimed: true, limited: false, job: { id: data.id, state: data.state, article_id: data.article_id } };
+    const publication = data.state === "duplicate" ? null : await publishPreparedJob(data.id, data.article_id, ctx);
+    emit?.({ type: "run_done", at: new Date().toISOString(), message: data.state === "duplicate" ? "Story already exists; no duplicate article saved." : `Editorial outcome: ${publication?.state || "duplicate"}.`, payload: ctx });
+    return { publication, context: ctx, claimed: true, limited: false, job: { id: data.id, state: data.state, article_id: data.article_id } };
   } catch {
     const { error } = await db.rpc("fail_agent_job", { p_id: job.id, p_lease: job.lease });
     console.error("[agent-job] Failed", { id: job.id, failureRecorded: !error });
-    throw new Error("Draft generation failed. Check the private job history; nothing was published.");
+    throw new Error("Draft generation failed. Check the private job history; consult the private publication audit.");
   }
 }

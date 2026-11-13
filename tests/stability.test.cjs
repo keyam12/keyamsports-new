@@ -295,10 +295,11 @@ test('tracked jobs persist drafts and usage, deduplicate before AI, and record f
   const env=Object.fromEntries(names.map(n=>[n,process.env[n]]));
   names.forEach(n=>process.env[n]=n==='KEYAM_ENABLE_AI'?'true':n.includes('URL')?'https://fixture.test':'test-only');
   const calls=[]; let claimed=true; let fail=false; let runs=0;
-  database.supabaseAdmin=()=>({rpc:async(name,args)=>{
+  database.supabaseAdmin=()=>({from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:null,error:null})})})}),rpc:async(name,args)=>{
     calls.push({name,args});
     if(name==='claim_agent_job') return {data:{claimed,job:{id:'fixture-id',lease:'fixture-lease',state:'needs_review'}},error:null};
-    if(name==='finish_agent_job') return {data:{id:'fixture-id',state:'needs_review',article_id:'fixture-article'},error:null};
+    if(name==='finish_agent_job') return {data:{id:'fixture-id',state:'needs_review',article_id:'00000000-0000-4000-8000-000000000003'},error:null};
+    if(name==='decide_agent_publication') return {data:{state:'hold'},error:null};
     return {data:null,error:null};
   }});
   limits.rateLimit=async(key)=>{
@@ -319,7 +320,7 @@ test('tracked jobs persist drafts and usage, deduplicate before AI, and record f
     assert.equal((await runDraftJob('fixture1')).claimed,false);
     assert.equal(runs,1);
     claimed=true; fail=true;
-    await assert.rejects(runDraftJob('fixture2'),/nothing was published/);
+    await assert.rejects(runDraftJob('fixture2'),/publication audit/);
     assert.ok(calls.some(c=>c.name==='fail_agent_job'));
     assert.equal(calls.filter(c=>c.name==='finish_agent_job').length,1);
   } finally {
@@ -381,4 +382,48 @@ test('scheduler diagnostics are private, read-only, and do not require enabling 
     assert.equal(checks,1);
     assert.equal((await cron.GET(new Request('https://keyam.test/api/cron/agents?mode=unknown',{headers:{authorization:`Bearer ${secret}`}}))).status,400);
   } finally {diagnostics.agentDiagnostics=original;if(originalSecret===undefined)delete process.env.CRON_SECRET;else process.env.CRON_SECRET=originalSecret;}
+});
+
+
+test('automatic publication requires fresh primary evidence, explicit approval and low risk',()=>{
+  const {publicationDecision}=require('../lib/editorialPolicy.ts');
+  const evidence={primary:true,relevant:true,url:'https://www.nba.com/news/fixture',text:'Fixture primary evidence.',checkedAt:new Date().toISOString()};
+  const input={topic:'Home team wins basketball game',article:'Home team wins. Fixture match report.',verdict:'APPROVED',research:{primaryVerified:true,evidence:[evidence],reasons:[]},assessment:{decision:'APPROVE',riskTier:1,allClaimsSupported:true,contradictions:false,contentType:'game_result'}};
+  assert.equal(publicationDecision(input).decision,'APPROVE');
+  for(const changed of [
+    {...input,research:{...input.research,primaryVerified:false}},
+    {...input,verdict:'NEEDS_REVIEW'},
+    {...input,assessment:{...input.assessment,riskTier:3}},
+    {...input,assessment:{...input.assessment,contradictions:true}},
+    {...input,assessment:{...input.assessment,allClaimsSupported:false}},
+    {...input,article:'Player arrested following allegations.'},
+    {...input,research:{...input.research,evidence:[{...evidence,checkedAt:'2020-01-01'}]}},
+    {...input,assessment:{}},
+  ])assert.equal(publicationDecision(changed).decision,'HOLD');
+});
+test('research rejects untrusted destinations and irrelevant or navigation-only primary pages',()=>{
+  const {permittedEvidenceUrl,evidenceFromHtml}=require('../agents/ResearchAgent.ts');
+  assert.equal(permittedEvidenceUrl('https://www.nba.com/news/fixture'),true);
+  for(const url of ['http://nba.com/news','https://nba.com.attacker.test/news','https://user:pass@nba.com/news','https://127.0.0.1/news','https://nba.com:9000/news'])assert.equal(permittedEvidenceUrl(url),false);
+  assert.equal(evidenceFromHtml('https://nba.com/news','<title>Team news</title><nav>Fixture text</nav>','Lakers win basketball game'),null);
+  const html='<h1>Lakers Celtics match result</h1><article>'+('Fixture evidence describing the basketball match. '.repeat(8))+'</article>';
+  assert.equal(evidenceFromHtml('https://nba.com/news',html,'Lakers Celtics game result').relevant,true);
+  assert.equal(evidenceFromHtml('https://nba.com/news',html,'Arsenal Liverpool game result').relevant,false);
+});
+test('publisher verifies a real public article marker and never follows a different host',async()=>{
+  const {verifyPublishedUrl}=require('../lib/autoPublisher.ts');
+  const original=global.fetch;let calls=0;
+  const id='00000000-0000-4000-8000-000000000001';
+  global.fetch=async()=>{calls++;return new Response(`<article data-article-id="${id}">Fixture</article>`);};
+  try{
+    assert.equal(await verifyPublishedUrl('https://attacker.test/news/'+id,id),false);
+    assert.equal(calls,0);
+    assert.equal(await verifyPublishedUrl('https://keyamsports-new.vercel.app/news/fixture-'+id,id),true);
+    assert.equal(calls,1);
+  }finally{global.fetch=original;}
+});
+test('pause prevents autonomous generation without changing the job queue',async()=>{
+  const original=process.env.PAUSE_PUBLISHING;process.env.PAUSE_PUBLISHING='true';
+  try{assert.equal((await require('../lib/agentJobs.ts').runDraftJob('paused-fixture')).paused,true);}
+  finally{if(original===undefined)delete process.env.PAUSE_PUBLISHING;else process.env.PAUSE_PUBLISHING=original;}
 });

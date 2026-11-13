@@ -3,10 +3,10 @@ import type { AgentId } from "./types";
 export interface ModelUsage {
   agent: AgentId; model: string; inputTokens: number; outputTokens: number; incomplete: boolean;
 }
-interface RunBudget { calls: number; accountingFailed?: boolean; record: (usage: ModelUsage) => Promise<void>; }
+interface RunBudget { calls: number; deadline: number; accountingFailed?: boolean; record: (usage: ModelUsage) => Promise<void>; }
 const budgets = new AsyncLocalStorage<RunBudget>();
 export function withUsageTracking<T>(record: RunBudget["record"], run: () => Promise<T>): Promise<T> {
-  const budget: RunBudget = { calls: 0, record };
+  const budget: RunBudget = { calls: 0, deadline: Date.now()+140_000, record };
   return budgets.run(budget, async () => {
     const result = await run();
     if (budget.accountingFailed) throw new Error("Usage accounting unavailable");
@@ -18,6 +18,7 @@ export function reserveModelCall(prompt: string, system: string) {
     throw new Error("Model input limit exceeded");
   }
   const budget = budgets.getStore();
+  if (budget && Date.now()+30_000>budget.deadline) throw new Error("Editorial execution deadline reached");
   if (budget?.accountingFailed) throw new Error("Usage accounting unavailable");
   if (budget && ++budget.calls > 10) throw new Error("Model call limit exceeded");
 }
