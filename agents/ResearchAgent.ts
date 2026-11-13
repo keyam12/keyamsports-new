@@ -1,7 +1,7 @@
 /** Read-only evidence retrieval. No arbitrary hosts, redirects or invented sources. */
 const PRIMARY = ['nba.com','nfl.com','mlb.com','fifa.com','uefa.com','premierleague.com','laliga.com','manutd.com','fcbarcelona.com','realmadrid.com'];
 const REPORTERS = ['espn.com','reuters.com','apnews.com','bbc.com','bbc.co.uk','sportsnet.ca'];
-export interface Evidence { url: string; primary: boolean; relevant: boolean; text: string; checkedAt: string; }
+export interface Evidence { url: string; primary: boolean; relevant: boolean; publishedAt?: string; text: string; checkedAt: string; }
 export interface Research { primaryVerified: boolean; evidence: Evidence[]; reasons: string[]; }
 const matches = (host: string, domains: string[]) => domains.some(d => host === d || host.endsWith('.'+d));
 export function permittedEvidenceUrl(value: string): boolean {
@@ -20,8 +20,15 @@ export function evidenceFromHtml(url: string, html: string, topic: string): Evid
   const text=plain(content).slice(0,6500);
   if(text.length<150 || !heading) return null;
   const words=[...new Set(topic.toLowerCase().match(/[a-z]{4,}/g) || [])].filter(w=>!['confirmed','confirms','announces','announced','official','record','sports','today','after','before','against','coach','head','news','team'].includes(w));
+  let publishedAt: string | undefined;
+  for(const tag of html.match(/<meta\b[^>]*>/gi) || []) {
+    if(!/(?:property|name)=["'](?:article:published_time|datePublished|pubdate)["']/i.test(tag))continue;
+    const value=tag.match(/content=["']([^"']+)["']/i)?.[1];
+    if(value && Number.isFinite(Date.parse(value))){publishedAt=new Date(value).toISOString();break;}
+  }
+  if(!publishedAt){const value=html.match(/"datePublished"\s*:\s*"([^"<>]+)"/)?.[1];if(value && Number.isFinite(Date.parse(value)))publishedAt=new Date(value).toISOString();}
   const relevant=words.filter(w=>heading.toLowerCase().includes(w)).length>=2;
-  return {url,primary:matches(new URL(url).hostname,PRIMARY),relevant,text:heading+'\n'+text,checkedAt:new Date().toISOString()};
+  return {url,publishedAt,primary:matches(new URL(url).hostname,PRIMARY),relevant,text:heading+'\n'+text,checkedAt:new Date().toISOString()};
 }
 async function sourceHtml(url: string): Promise<{url:string;html:string}> {
   const signal=AbortSignal.timeout(7000);
@@ -49,6 +56,6 @@ export async function researchStory(sources: string[], topic: string): Promise<R
   const extra=await Promise.allSettled([...officialLinks].slice(0,2).map(sourceHtml));
   for(const result of extra){if(result.status!=='fulfilled')continue;const item=evidenceFromHtml(result.value.url,result.value.html,topic);if(item?.relevant)evidence.push(item);}
   const unique=[...new Map(evidence.map(e=>[e.url,e])).values()].slice(0,3);
-  const primaryVerified=unique.some(e=>e.primary && e.relevant);
+  const primaryVerified=unique.some(e=>e.primary && e.relevant && e.publishedAt && Date.parse(e.publishedAt)<=Date.now() && Date.now()-Date.parse(e.publishedAt)<48*3600_000);
   return {primaryVerified,evidence:unique,reasons:primaryVerified?[]:['No accessible, relevant primary source verified; retain without publication.']};
 }

@@ -5,7 +5,7 @@ export function publicationDecision(input: {topic:string;article:string;verdict:
   const a=input.assessment || {};const tier=a.riskTier;
   const reasons:string[]=[];
   if(SENSITIVE.test(input.topic+'\n'+input.article))reasons.push('Sensitive, uncertain or high-risk claims.');
-  if(!input.research?.primaryVerified || !input.research.evidence.some(e=>e.primary && e.relevant && Number.isFinite(Date.parse(e.checkedAt)) && Date.now()-Date.parse(e.checkedAt)<15*60_000 && Date.parse(e.checkedAt)<=Date.now()))reasons.push('Fresh primary evidence not verified.');
+  if(!input.research?.primaryVerified || !input.research.evidence.some(e=>e.primary && e.relevant && e.publishedAt && Date.parse(e.publishedAt)<=Date.now() && Date.now()-Date.parse(e.publishedAt)<48*3600_000 && Number.isFinite(Date.parse(e.checkedAt)) && Date.now()-Date.parse(e.checkedAt)<15*60_000 && Date.parse(e.checkedAt)<=Date.now()))reasons.push('Fresh primary evidence not verified.');
   if(input.verdict!=='APPROVED' || a.decision!=='APPROVE')reasons.push('Senior Editor did not explicitly approve.');
   if(tier!==1 && tier!==2)reasons.push('Risk tier is not 1 or 2.');
   if(a.allClaimsSupported!==true || a.contradictions!==false)reasons.push('Unsupported or conflicting claims remain.');

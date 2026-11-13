@@ -387,7 +387,7 @@ test('scheduler diagnostics are private, read-only, and do not require enabling 
 
 test('automatic publication requires fresh primary evidence, explicit approval and low risk',()=>{
   const {publicationDecision}=require('../lib/editorialPolicy.ts');
-  const evidence={primary:true,relevant:true,url:'https://www.nba.com/news/fixture',text:'Fixture primary evidence.',checkedAt:new Date().toISOString()};
+  const evidence={primary:true,relevant:true,url:'https://www.nba.com/news/fixture',text:'Fixture primary evidence.',publishedAt:new Date().toISOString(),checkedAt:new Date().toISOString()};
   const input={topic:'Home team wins basketball game',article:'Home team wins. Fixture match report.',verdict:'APPROVED',research:{primaryVerified:true,evidence:[evidence],reasons:[]},assessment:{decision:'APPROVE',riskTier:1,allClaimsSupported:true,contradictions:false,contentType:'game_result'}};
   assert.equal(publicationDecision(input).decision,'APPROVE');
   for(const changed of [
@@ -398,6 +398,8 @@ test('automatic publication requires fresh primary evidence, explicit approval a
     {...input,assessment:{...input.assessment,allClaimsSupported:false}},
     {...input,article:'Player arrested following allegations.'},
     {...input,research:{...input.research,evidence:[{...evidence,checkedAt:'2020-01-01'}]}},
+    {...input,research:{...input.research,evidence:[{...evidence,publishedAt:'2020-01-01'}]}},
+    {...input,research:{...input.research,evidence:[{...evidence,publishedAt:undefined}]}},
     {...input,assessment:{}},
   ])assert.equal(publicationDecision(changed).decision,'HOLD');
 });

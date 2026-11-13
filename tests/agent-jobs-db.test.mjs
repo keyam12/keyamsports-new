@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 const migration = name => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url),'utf8');
 const setup = migration('20261111090000_initial_articles.sql');
-const jobs = migration('20261111095000_agent_drafts.sql')+migration('20261113140000_autonomous_publication.sql');
+const jobs = migration('20261111095000_agent_drafts.sql')+migration('20261113140000_autonomous_publication.sql')+migration('20261113141000_require_primary_publication_date.sql');
 const db = new PGlite();
 await db.exec('create role anon; create role authenticated; create role service_role bypassrls; begin;'+setup+jobs+'commit;');
 const rpc = async (name,args) => (await db.query(`select public.${name}(${args.map((_,i)=>`$${i+1}`).join(',')}) as result`,args)).rows[0].result;
@@ -87,7 +87,7 @@ test('database limiter shares counts and resets an expired window',async()=>{
 test('autonomous approval publishes only the selected verified Tier 1/2 article',async()=>{
  const claim=await rpc('claim_agent_job',['auto-publish-fixture',100]);
  const body='Local approved headline\nVerified local fixture text only.';
- const context={publicationStatus:'needs_review',article:body,seniorEditorVerdict:'APPROVED',research:{primaryVerified:true,evidence:[{primary:true,relevant:true,checkedAt:new Date().toISOString()}]},category:'basketball',sources:['https://nba.com/news/test-publication-fixture'],automation:{decision:'APPROVE',riskTier:1,allClaimsSupported:true,contradictions:false,reasons:[]}};
+ const context={publicationStatus:'needs_review',article:body,seniorEditorVerdict:'APPROVED',research:{primaryVerified:true,evidence:[{primary:true,relevant:true,publishedAt:new Date().toISOString(),checkedAt:new Date().toISOString()}]},category:'basketball',sources:['https://nba.com/news/test-publication-fixture'],automation:{decision:'APPROVE',riskTier:1,allClaimsSupported:true,contradictions:false,reasons:[]}};
  const fixture={...draft,title:'Local approved headline',summary:body,sources:['https://nba.com/news/test-publication-fixture']};
  const finished=await rpc('finish_agent_job',[claim.job.id,claim.job.lease,context,fixture]);
  const url='https://keyamsports-new.vercel.app/news/fixture-'+finished.article_id;
@@ -126,5 +126,14 @@ test('public roles cannot approve articles or read internal publication alerts',
  await assert.rejects(db.query('select * from agent_alerts'),/permission denied/);
  await assert.rejects(rpc('decide_agent_publication',['00000000-0000-4000-8000-000000000000','https://example.com']),/permission denied/);
  await db.exec('reset role; set role service_role;');
+});
+
+test('freshly fetched historical primary pages cannot authorize a new publication',async()=>{
+ const claim=await rpc('claim_agent_job',['old-primary-fixture',100]);
+ const fixture={...draft,title:'Old source fixture',summary:'Old source fixture\nThis must stay retained.',sources:['https://nba.com/news/old-primary-fixture']};
+ const context={publicationStatus:'needs_review',article:fixture.summary,category:fixture.category,sources:fixture.sources,seniorEditorVerdict:'APPROVED',research:{primaryVerified:true,evidence:[{primary:true,relevant:true,checkedAt:new Date().toISOString(),publishedAt:'2020-01-01T00:00:00Z'}]},automation:{decision:'APPROVE',riskTier:1,allClaimsSupported:true,contradictions:false,reasons:[]}};
+ const completed=await rpc('finish_agent_job',[claim.job.id,claim.job.lease,context,fixture]);
+ assert.equal((await rpc('decide_agent_publication',[claim.job.id,'https://keyamsports-new.vercel.app/news/fixture-'+completed.article_id])).state,'hold');
+ assert.equal((await db.query('select status from articles where id=$1',[completed.article_id])).rows[0].status,'draft');
 });
 test.after(async()=>{await db.close();});
