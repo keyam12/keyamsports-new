@@ -301,7 +301,10 @@ test('tracked jobs persist drafts and usage, deduplicate before AI, and record f
     if(name==='finish_agent_job') return {data:{id:'fixture-id',state:'needs_review',article_id:'fixture-article'},error:null};
     return {data:null,error:null};
   }});
-  limits.rateLimit=async()=>({ok:true,retryAfter:0});
+  limits.rateLimit=async(key)=>{
+    assert.equal(key,`ai:global:daily:${new Date().toISOString().slice(0,10)}`);
+    return {ok:true,retryAfter:0};
+  };
   runner.runCrew=async()=>{
     runs++;
     if(fail) throw new Error('Fixture provider failure');

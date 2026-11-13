@@ -51,7 +51,7 @@ export async function runDraftJob(key: string, emit?: (event: AgentEvent) => voi
     job: claim.job ? { id: claim.job.id, state: claim.job.state, article_id: claim.job.article_id } : null };
   const job = claim.job;
   try {
-    const quota = await rateLimit("ai:global:daily", readiness.dailyRunLimit, 86_400_000, true);
+    const quota = await rateLimit(`ai:global:daily:${new Date().toISOString().slice(0, 10)}`, readiness.dailyRunLimit, 86_400_000, true);
     if (!quota.ok) throw new Error("Global run quota unavailable or exhausted");
     const ctx = await withUsageTracking(async (usage) => {
       const { error } = await db.rpc("record_agent_usage", { p_id: job.id, p_lease: job.lease, p_usage: usage });

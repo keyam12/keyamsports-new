@@ -21,7 +21,7 @@ export async function authorizeAgentRun(req: Request, reserveQuota = true): Prom
     return Response.json({ error: "Invalid daily AI run limit." }, { status: 503 });
   }
   if (!reserveQuota) return null;
-  const result = await rateLimit("ai:global:daily", limit, 86_400_000, true);
+  const result = await rateLimit(`ai:global:daily:${new Date().toISOString().slice(0, 10)}`, limit, 86_400_000, true);
   return result.ok ? null : Response.json(
     { error: "AI run limit reached or limiter unavailable." },
     { status: 429, headers: { "Retry-After": String(result.retryAfter) } }
