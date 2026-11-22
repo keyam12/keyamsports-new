@@ -33,3 +33,9 @@ The initial Supabase migration and import of the 13 existing publications are pr
 - AdSense is existing optional functionality. The baseline CSP needs provider-specific review before advertisements or third-party embeds are enabled. GA4, licensed images/video and a consent flow are not implemented yet.
 
 Read the [audit and roadmap](docs/REPOSITORY_AUDIT.md) and [stability results](docs/STABILITY_CHANGELOG.md) before staging. Confirm Supabase/Redis access, provider permissions, model access and editorial review rules in staging. Production deployments require explicit user authorization. See [content recovery](docs/CONTENT_RECOVERY.md) for the correction preserving the existing editorial notes.
+
+## Publishing roadmap
+
+See the [current publishing roadmap](docs/PUBLISHING_ROADMAP.md), including privacy, consent, editorial trust, content/media rights and accessibility checks before expanding to 15–30-minute operation. The checklist is pending review; existing policy pages do not establish completion.
+
+See the [November 22 operations/source review](docs/OPERATIONS_REVIEW_2026-11-22.md) and [trust review](docs/TRUST_REVIEW_2026-11-22.md) for measured findings, new queue behavior and outstanding launch requirements. The legacy cron and existing generation budget are unchanged; 15/30-minute activation is not claimed.

@@ -1,6 +1,7 @@
 import { safeEqual } from "../../../../lib/adminAuth";
-import { agentReadiness, runDraftJob } from "../../../../lib/agentJobs";
+import { agentReadiness } from "../../../../lib/agentJobs";
 import { reconcilePendingPublication } from "../../../../lib/autoPublisher";
+import { runEditorialCycle } from "../../../../lib/editorialCycle";
 import { agentDiagnostics } from "../../../../lib/agentDiagnostics";
 export const dynamic = "force-dynamic";
 export const maxDuration = 240;
@@ -21,9 +22,8 @@ export async function GET(req: Request) {
   if (process.env.PAUSE_PUBLISHING === "true") return Response.json({paused:true,published:0,held:0,failed:0});
   try {
     await reconcilePendingPublication();
-    const result = await runDraftJob(`daily:${new Date().toISOString().slice(0, 10)}`);
-    const state = result.publication?.state;
-    return Response.json({...result,published:result.claimed && state==='published'?1:0,held:result.claimed && state==='hold'?1:0,failed:state==='failed'?1:0}, { status: result.limited ? 429 : 200, headers: { "Cache-Control": "no-store" } });
+    const result = await runEditorialCycle();
+    return Response.json(result, { status: result.error ? 503 : 200, headers: { "Cache-Control": "no-store" } });
   } catch {
     console.error("[cron/agents] Scheduled draft failed");
     return Response.json({ error: "Editorial run failed. Consult the private publication audit for the actual publication state." }, { status: 503 });

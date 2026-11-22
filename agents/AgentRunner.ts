@@ -18,7 +18,7 @@ const SCOUT_SPORTS = ["NBA", "NFL", "MLB", "Soccer"];
 
 export async function runCrew(
   emitRaw: (event: AgentEvent) => void,
-  opts?: { excludeTopics?: string[] }
+  opts?: { excludeTopics?: string[]; headlines?: import("../lib/headlines").Headline[] }
 ): Promise<RunContext> {
   const emit: EmitFn = (e) => emitRaw({ ...e, at: new Date().toISOString() });
   if (!hasApiKey()) throw new Error("AI credentials are not configured; no demo news is generated.");
@@ -49,7 +49,7 @@ export async function runCrew(
   const previous = await getPublishedArticles();
   const excludeTopics = [...previous.map((a) => a.title), ...(opts?.excludeTopics || [])].slice(0, 30);
   await Promise.allSettled(
-    SCOUT_SPORTS.map((sport) =>
+    (opts?.headlines ? [...new Set(opts.headlines.map(h=>h.sport))] : SCOUT_SPORTS).map((sport) =>
       wrap("scout", async () => {
         const { topic, findings, sources } = await runScout(emit, {
           ...opts,

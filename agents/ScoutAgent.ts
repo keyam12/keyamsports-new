@@ -1,12 +1,13 @@
 // 🔭 Scout — the eyes of the crew. Finds today's top sports storyline.
 import type { EmitFn, RunContext } from "./types";
 import { completeFor, hasApiKey, sleep } from "./llm";
-import { getHeadlines, formatHeadlines } from "../lib/headlines";
+import { getHeadlines, formatHeadlines, type Headline } from "../lib/headlines";
 import { getRecentTopics, formatCoveredTopics } from "../lib/recentCoverage";
 
 export interface ScoutOptions {
   /** Topics covered very recently (e.g. recent chat drafts) — don't pick these again. */
   excludeTopics?: string[];
+  headlines?: Headline[];
   /** Limit the scout to one sport feed (NBA, NFL, MLB, Soccer). Default: all. */
   sport?: string;
 }
@@ -33,7 +34,7 @@ export async function runScout(
   if (!hasApiKey()) throw new Error("AI credentials are not configured");
   {
     emit({ type: "agent_log", agent: "scout", message: `Fetching today's real ${opts.sport || "sports"} headlines…` });
-    const headlines = await getHeadlines(opts.sport);
+    const headlines = opts.headlines ?? await getHeadlines(opts.sport);
     let prompt: string;
     if (headlines.length > 0) {
       emit({ type: "agent_log", agent: "scout", message: `Found ${headlines.length} real headlines. Asking AI to pick the top storyline…` });

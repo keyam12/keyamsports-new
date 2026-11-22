@@ -13,11 +13,12 @@ export async function GET(req: Request) {
   const readiness = agentReadiness();
   const db = supabaseAdmin();
   if (!db) return Response.json({ readiness, jobs: [], storageReady: false }, { headers });
-  const { data, error } = await db.from("agent_jobs")
+  const history = db.from("agent_jobs")
     .select("id,job_key,state,attempts,article_id,error_code,input_tokens,output_tokens,usage_incomplete,created_at,updated_at,lease_until,context,agent_publications(state,risk_tier,reasons,public_url,verified_at)")
     .order("updated_at", { ascending: false }).limit(20);
+  const [{data,error},queue] = await Promise.all([history,db.rpc("editorial_queue_status")]);
   if (error) console.error("[agent-jobs] Private history unavailable");
-  return Response.json({ readiness, jobs: (data || []).map(job => ({ ...job, context: job.context ? {
+  return Response.json({ readiness, queueReady:!queue.error, queue:queue.error?null:queue.data, jobs: (data || []).map(job => ({ ...job, context: job.context ? {
     seniorEditorVerdict: job.context.seniorEditorVerdict, seniorEditorNotes: job.context.seniorEditorNotes,
   } : null })), storageReady: !error }, { headers });
 }

@@ -74,6 +74,8 @@ Workflow: discovered -> researching -> draft -> needs_review -> approved -> publ
 
 ## 8. Incremental roadmap and files
 
+This section preserves the original audit roadmap. See the [current publishing roadmap](PUBLISHING_ROADMAP.md) for the staged 15–30-minute objective and the added privacy, rights, editorial and accessibility gate.
+
 | Phase | Priority / deliverable | Specific files |
 |---|---|---|
 | A | Audit, reproducible install/build, provider/config inventory | docs/REPOSITORY_AUDIT.md, package.json, package-lock.json, README.md, .env.example |

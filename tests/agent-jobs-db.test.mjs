@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 const migration = name => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url),'utf8');
 const setup = migration('20261111090000_initial_articles.sql');
-const jobs = migration('20261111095000_agent_drafts.sql')+migration('20261113140000_autonomous_publication.sql')+migration('20261113141000_require_primary_publication_date.sql');
+const jobs = migration('20261111095000_agent_drafts.sql')+migration('20261113140000_autonomous_publication.sql')+migration('20261113141000_require_primary_publication_date.sql')+migration('20261122100000_discovery_queue.sql');
 const db = new PGlite();
 await db.exec('create role anon; create role authenticated; create role service_role bypassrls; begin;'+setup+jobs+'commit;');
 const rpc = async (name,args) => (await db.query(`select public.${name}(${args.map((_,i)=>`$${i+1}`).join(',')}) as result`,args)).rows[0].result;
@@ -135,5 +135,66 @@ test('freshly fetched historical primary pages cannot authorize a new publicatio
  const completed=await rpc('finish_agent_job',[claim.job.id,claim.job.lease,context,fixture]);
  assert.equal((await rpc('decide_agent_publication',[claim.job.id,'https://keyamsports-new.vercel.app/news/fixture-'+completed.article_id])).state,'hold');
  assert.equal((await db.query('select status from articles where id=$1',[completed.article_id])).rows[0].status,'draft');
+});
+
+let queueCycle;
+const queueEvent=(source,story,title,offset=0)=>({sourceKey:source.repeat(64),storyKey:story.repeat(64),providerId:'espn:nba',headline:{sport:'NBA',headline:title,description:'Local queue fixture',link:'https://espn.com/story/'+source,published:new Date(Date.now()-offset).toISOString()}});
+test('discovery is durable and repeated batches do not duplicate events or drop revisions',async()=>{
+ queueCycle=(await rpc('claim_editorial_cycle',['queue-fixture-1'])).cycle;
+ assert.equal((await rpc('claim_editorial_cycle',['queue-overlap'])).reason,'ACTIVE_RUN');
+ const events=[queueEvent('a','b','First queue fixture'),queueEvent('c','d','Second queue fixture',1000)];
+ assert.equal(await rpc('ingest_editorial_events',[queueCycle.cycle_key,queueCycle.lease,events,[{id:'espn:nba',available:true},{id:'espn:nfl',available:false}]]),2);
+ assert.equal(await rpc('ingest_editorial_events',[queueCycle.cycle_key,queueCycle.lease,events,[]]),0);
+ assert.equal((await db.query('select count(*)::int n from editorial_events')).rows[0].n,2);
+ events[0].headline.description='Updated source facts';
+ await rpc('ingest_editorial_events',[queueCycle.cycle_key,queueCycle.lease,events,[]]);
+ assert.equal((await db.query('select max(versions) as n from editorial_discoveries')).rows[0].n,2);
+ assert.equal((await db.query("select count(*)::int n from editorial_feed_cursors where provider_id='espn:nfl'")).rows[0].n,0);
+});
+test('budget deferral preserves an event without consuming an attempt; stale workers cannot finish it',async()=>{
+ const event=await rpc('claim_editorial_event',[queueCycle.cycle_key,queueCycle.lease]);
+ assert.equal(event.attempts,1);
+ await assert.rejects(rpc('finish_editorial_event',[event.id,'00000000-0000-0000-0000-000000000000','held',null,'BAD_LEASE']),/lease expired/);
+ await assert.rejects(rpc('finish_editorial_event',[event.id,event.lease,'published',null,null]),/No verified publication/);
+ await rpc('finish_editorial_event',[event.id,event.lease,'budget',null,'DAILY_BUDGET_REACHED']);
+ const stored=(await db.query('select state,attempts from editorial_events where id=$1',[event.id])).rows[0];
+ assert.equal(stored.state,'queued');assert.equal(stored.attempts,0);
+ const next=await rpc('claim_editorial_event',[queueCycle.cycle_key,queueCycle.lease]);
+ assert.notEqual(next.id,event.id);
+ await rpc('finish_editorial_event',[next.id,next.lease,'held',null,'EDITORIAL_HOLD']);
+ await rpc('finish_editorial_cycle',[queueCycle.cycle_key,queueCycle.lease,{held:1},false]);
+ assert.equal((await rpc('claim_editorial_cycle',['queue-fixture-1'])).reason,'ALREADY_PROCESSED');
+});
+test('event retries recover after expiry and stop after three failures',async()=>{
+ const cycle=(await rpc('claim_editorial_cycle',['queue-fixture-2'])).cycle;
+ await db.exec("update editorial_events set available_at=now() where state='queued'");
+ let event;
+ for(let attempt=1;attempt<=3;attempt++){
+  event=await rpc('claim_editorial_event',[cycle.cycle_key,cycle.lease]);
+  assert.equal(event.attempts,attempt);
+  await rpc('finish_editorial_event',[event.id,event.lease,'failed',null,'FIXTURE_FAILURE']);
+  await db.exec("update editorial_events set available_at=now() where state='queued'");
+ }
+ assert.equal((await db.query('select state from editorial_events where id=$1',[event.id])).rows[0].state,'failed');
+ assert.equal(await rpc('claim_editorial_event',[cycle.cycle_key,cycle.lease]),null);
+ assert.ok((await db.query('select count(*)::int n from editorial_queue_alerts')).rows[0].n>=2);
+ await rpc('finish_editorial_cycle',[cycle.cycle_key,cycle.lease,{failed:1},true]);
+});
+test('an invalid discovery batch cannot advance its cursor or partially persist',async()=>{
+ const cycle=(await rpc('claim_editorial_cycle',['queue-invalid-batch'])).cycle;
+ const good=queueEvent('e','f','Transactional fixture');
+ const bad={...queueEvent('f','e','Bad source'),sourceKey:'invalid'};
+ await assert.rejects(rpc('ingest_editorial_events',[cycle.cycle_key,cycle.lease,[good,bad],[{id:'new-provider',available:true}]]),/Invalid event/);
+ assert.equal((await db.query('select count(*)::int n from editorial_discoveries where source_key=$1',[good.sourceKey])).rows[0].n,0);
+ assert.equal((await db.query("select count(*)::int n from editorial_feed_cursors where provider_id='new-provider'")).rows[0].n,0);
+ await rpc('finish_editorial_cycle',[cycle.cycle_key,cycle.lease,{failed:1},true]);
+});
+test('queue observability remains private',async()=>{
+ const report=await rpc('editorial_queue_status',[]);
+ assert.equal(report.events.held,1);assert.equal(report.events.failed,1);
+ await db.exec('reset role; set role anon;');
+ await assert.rejects(rpc('editorial_queue_status',[]),/permission denied/);
+ await assert.rejects(db.query('select * from editorial_events'),/permission denied/);
+ await db.exec('reset role; set role service_role;');
 });
 test.after(async()=>{await db.close();});

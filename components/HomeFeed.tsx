@@ -34,7 +34,7 @@ export default function HomeFeed({ initialArticles, today }: { initialArticles: 
       <section className="bg-primary text-white -mx-6 -mt-6 px-6 pt-10 pb-10 mb-6 relative overflow-hidden">
         <div className="flex items-center gap-2 mb-5">
           <span className="flex items-center gap-1.5 bg-accent text-ink text-xs font-bold px-2.5 py-1 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" /> LIVE
+            <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" /> NEWS
           </span>
           <span className="text-sm opacity-80">{today}</span>
         </div>
@@ -46,8 +46,8 @@ export default function HomeFeed({ initialArticles, today }: { initialArticles: 
         <svg className="w-56 sm:w-80 mt-2" viewBox="0 0 300 20" fill="none" aria-hidden="true">
           <path d="M5 13 Q 45 4, 80 10 T 150 10 T 220 10 T 295 8" stroke="#D9FF3D" strokeWidth="6" strokeLinecap="round" />
         </svg>
-        <p className="text-xl opacity-90 mt-4">AI-powered sports news, around the clock.</p>
-        <p className="text-sm opacity-70 mt-1">Real headlines · Live scores · Zero guesswork</p>
+        <p className="text-xl opacity-90 mt-4">Sports news, assisted by AI.</p>
+        <p className="text-sm opacity-70 mt-1">Source-linked coverage · Scores when available · AI assistance disclosed</p>
         <div className="flex flex-wrap gap-3 mt-6">
           <a href="#headlines" className="inline-flex items-center gap-2 bg-accent text-ink font-bold px-5 py-2.5 rounded-full hover:opacity-90 transition">Ver las noticias <Icon name="arrowDown" className="h-4 w-4" /></a>
           <a href="/odds" className="inline-flex items-center gap-2 border-2 border-white/70 font-bold px-5 py-2.5 rounded-full hover:bg-white/10 transition"><Icon name="chart" className="h-4 w-4" /> Ver odds</a>
@@ -70,8 +70,8 @@ export default function HomeFeed({ initialArticles, today }: { initialArticles: 
             <p className="text-[11px] uppercase tracking-wider opacity-80 mt-1">Deportes</p>
           </div>
           <div>
-            <p className="font-display text-3xl font-bold leading-none">24/7</p>
-            <p className="text-[11px] uppercase tracking-wider opacity-80 mt-1">Redacción AI</p>
+            <p className="font-display text-3xl font-bold leading-none">AI</p>
+            <p className="text-[11px] uppercase tracking-wider opacity-80 mt-1">Asistencia editorial</p>
           </div>
         </div>
       </section>
@@ -90,7 +90,7 @@ export default function HomeFeed({ initialArticles, today }: { initialArticles: 
               <h2 className="font-display text-3xl font-bold uppercase tracking-tight">Latest Headlines</h2>
               <div className="h-1 w-14 bg-primary rounded-full mt-2" />
             </div>
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Updated 24/7 by AI</span>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">AI-assisted · Source-linked</span>
           </div>
           {feedLoading ? (
             <p className="text-gray-500 bg-white border rounded-2xl p-5">Loading headlines…</p>

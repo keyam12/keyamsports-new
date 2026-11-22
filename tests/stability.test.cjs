@@ -406,7 +406,7 @@ test('automatic publication requires fresh primary evidence, explicit approval a
 test('research rejects untrusted destinations and irrelevant or navigation-only primary pages',()=>{
   const {permittedEvidenceUrl,evidenceFromHtml}=require('../agents/ResearchAgent.ts');
   assert.equal(permittedEvidenceUrl('https://www.nba.com/news/fixture'),true);
-  for(const url of ['http://nba.com/news','https://nba.com.attacker.test/news','https://user:pass@nba.com/news','https://127.0.0.1/news','https://nba.com:9000/news'])assert.equal(permittedEvidenceUrl(url),false);
+  for(const url of ['http://nba.com/news','https://nba.com.attacker.test/news','https://user:pass@nba.com/news','https://127.0.0.1/news','https://nba.com:9000/news','https://mlb.com/news/permission-needed'])assert.equal(permittedEvidenceUrl(url),false);
   assert.equal(evidenceFromHtml('https://nba.com/news','<title>Team news</title><nav>Fixture text</nav>','Lakers win basketball game'),null);
   const html='<h1>Lakers Celtics match result</h1><article>'+('Fixture evidence describing the basketball match. '.repeat(8))+'</article>';
   assert.equal(evidenceFromHtml('https://nba.com/news',html,'Lakers Celtics game result').relevant,true);
@@ -428,4 +428,59 @@ test('pause prevents autonomous generation without changing the job queue',async
   const original=process.env.PAUSE_PUBLISHING;process.env.PAUSE_PUBLISHING='true';
   try{assert.equal((await require('../lib/agentJobs.ts').runDraftJob('paused-fixture')).paused,true);}
   finally{if(original===undefined)delete process.env.PAUSE_PUBLISHING;else process.env.PAUSE_PUBLISHING=original;}
+});
+
+test('discovery identities remove tracking and slot keys preserve 15/30-minute boundaries',()=>{
+  const {discoveryRecord,editorialSlotKey}=require('../lib/editorialCycle.ts');
+  const fixture={sport:'NBA',headline:'Local fixture result',description:'Fixture only',link:'https://www.espn.com/story/123?utm_source=test#part',published:new Date().toISOString()};
+  const a=discoveryRecord(fixture), b=discoveryRecord({...fixture,link:'https://espn.com/story/123'});
+  assert.equal(a.sourceKey,b.sourceKey);assert.equal(a.storyKey,b.storyKey);
+  assert.equal(editorialSlotKey(new Date('2026-11-22T12:29:59Z'),30),'cycle:2026-11-22:12:00');
+  assert.equal(editorialSlotKey(new Date('2026-11-22T12:30:00Z'),30),'cycle:2026-11-22:12:30');
+  assert.equal(editorialSlotKey(new Date('2026-11-22T12:29:59Z'),15),'cycle:2026-11-22:12:15');
+  assert.throws(()=>discoveryRecord({...fixture,link:'https://attacker.test/story'}));
+});
+test('a queued cycle persists discovery first, uses a stable event job and defers exhausted budgets',async()=>{
+  const db=require('../lib/supabase.ts'), feeds=require('../lib/headlines.ts'), jobs=require('../lib/agentJobs.ts');
+  const {runEditorialCycle}=require('../lib/editorialCycle.ts');
+  const saved={db:db.supabaseAdmin,batch:feeds.getHeadlineBatch,job:jobs.runDraftJob};
+  const fixture={sport:'NBA',headline:'Local queued story',description:'Fixture only',link:'https://espn.com/story/fixture',published:new Date().toISOString()};
+  const calls=[];let limited=false,blocked=false,failIngest=false;
+  db.supabaseAdmin=()=>({rpc:async(name,args)=>{
+    calls.push({name,args});
+    if(name==='claim_editorial_cycle')return {data:blocked?{claimed:false,reason:'ACTIVE_RUN'}:{claimed:true,cycle:{lease:'cycle-lease'}},error:null};
+    if(name==='ingest_editorial_events')return failIngest?{error:{message:'fixture transaction failed'}}:{data:1,error:null};
+    if(name==='claim_editorial_event')return {data:{id:'00000000-0000-4000-8000-000000000004',lease:'event-lease',headlines:[fixture]},error:null};
+    return {data:null,error:null};
+  }});
+  feeds.getHeadlineBatch=async()=>({headlines:[fixture],feeds:[{id:'espn:nba',available:true,accepted:1,error:null}]});
+  jobs.runDraftJob=async(key,emit,opts)=>{
+    assert.equal(key,'event:00000000-0000-4000-8000-000000000004');
+    assert.deepEqual(opts.headlines,[fixture]);
+    assert.ok(calls.some(c=>c.name==='ingest_editorial_events'));
+    return limited?{limited:true,job:null}:{publication:{state:'hold'},job:{id:'fixture-job'}};
+  };
+  try{
+    assert.equal((await runEditorialCycle('fixture-cycle')).held,1);
+    assert.equal(calls.find(c=>c.name==='finish_editorial_event').args.p_outcome,'held');
+    calls.length=0;limited=true;
+    assert.equal((await runEditorialCycle('fixture-budget')).budgetLimited,true);
+    assert.equal(calls.find(c=>c.name==='finish_editorial_event').args.p_outcome,'budget');
+    calls.length=0;blocked=true;
+    assert.equal((await runEditorialCycle('fixture-overlap')).skipped,'ACTIVE_RUN');
+    assert.equal(calls.length,1);
+    calls.length=0;blocked=false;failIngest=true;
+    assert.equal((await runEditorialCycle('fixture-failure')).failed,1);
+    assert.equal(calls.some(c=>c.name==='claim_editorial_event'),false);
+    assert.equal(calls.find(c=>c.name==='finish_editorial_cycle').args.p_failed,true);
+  }finally{db.supabaseAdmin=saved.db;feeds.getHeadlineBatch=saved.batch;jobs.runDraftJob=saved.job;}
+});
+test('feed failure is distinct from an empty successful feed',async()=>{
+  const {getHeadlineBatch}=require('../lib/headlines.ts');const original=global.fetch;
+  try{
+    global.fetch=async()=>Response.json({articles:[]});
+    const empty=await getHeadlineBatch('NBA');assert.equal(empty.feeds[0].available,true);assert.equal(empty.headlines.length,0);
+    global.fetch=async()=>Response.json({}, {status:503});
+    const failed=await getHeadlineBatch('NBA');assert.equal(failed.feeds[0].available,false);assert.equal(failed.feeds[0].error,'UPSTREAM_HTTP_503');
+  }finally{global.fetch=original;}
 });

@@ -41,7 +41,7 @@ export function draftFromContext(ctx: RunContext) {
     status: "draft", ai: true });
 }
 
-export async function runDraftJob(key: string, emit?: (event: AgentEvent) => void) {
+export async function runDraftJob(key: string, emit?: (event: AgentEvent) => void, opts?: {headlines: import("./headlines").Headline[]}) {
   if (process.env.PAUSE_PUBLISHING === "true") return {claimed:false,limited:false,paused:true,job:null};
   const readiness = agentReadiness();
   if (!readiness.ready) throw new Error("Agent setup incomplete");
@@ -62,7 +62,7 @@ export async function runDraftJob(key: string, emit?: (event: AgentEvent) => voi
     const ctx = await withUsageTracking(async (usage) => {
       const { error } = await db.rpc("record_agent_usage", { p_id: job.id, p_lease: job.lease, p_usage: usage });
       if (error) throw new Error("Usage accounting unavailable");
-    }, () => runCrew((event) => { if (event.type !== "run_done") emit?.(event); }));
+    }, () => runCrew((event) => { if (event.type !== "run_done") emit?.(event); },opts));
     const draft = draftFromContext(ctx);
     const { data, error } = await db.rpc("finish_agent_job", { p_id: job.id, p_lease: job.lease, p_context: ctx, p_draft: draft });
     if (error || !data) throw new Error("Draft storage failed");

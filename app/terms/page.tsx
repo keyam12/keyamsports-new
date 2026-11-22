@@ -10,8 +10,7 @@ export default function Terms() {
         <h2 className="text-xl font-bold text-gray-900 pt-2">Content</h2>
         <p>
           Articles, scores and headlines may be AI-generated or AI-assisted and
-          are provided for informational and entertainment purposes. We do not
-          guarantee accuracy — demo content is clearly labeled as simulated.
+          are provided for informational and entertainment purposes. Automated editorial checks can miss errors. Simulated example content is not intended for production.
           Do not rely on this site for betting, financial or other consequential
           decisions.
         </p>
@@ -22,8 +21,9 @@ export default function Terms() {
         </p>
         <h2 className="text-xl font-bold text-gray-900 pt-2">Intellectual property</h2>
         <p>
-          Team names, league names and logos belong to their respective owners.
-          Site design and original text © KEYAM SPORTS.
+          Rights in third-party material remain with their respective rights holders.
+          References to teams and leagues are informational and do not imply endorsement.
+          Permission may be required to reuse protected material.
         </p>
         <h2 className="text-xl font-bold text-gray-900 pt-2">Changes</h2>
         <p>We may update these terms; continued use means acceptance.</p>

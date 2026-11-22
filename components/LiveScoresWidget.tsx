@@ -31,7 +31,7 @@ export default function LiveScoresWidget() {
   }, []);
 
   if (loading)
-    return <div className="p-4 bg-white border rounded">Loading live scores...</div>;
+    return <div className="p-4 bg-white border rounded">Loading scores...</div>;
 
   if (games.length === 0)
     return (

@@ -10,6 +10,7 @@ interface Job {
 interface Report {
   readiness: { ready: boolean; missing: string[]; dailyRunLimit: number; scheduled: boolean };
   storageReady: boolean; jobs: Job[];
+  queue?: {events:Record<string,number>;lastCycle?:{state:string;completed_at?:string;summary?:{error?:string}};alerts:{code:string;created_at:string}[]};
 }
 export default function AgentJobsPanel({ onSaved }: { onSaved: () => void }) {
   const [report, setReport] = useState<Report | null>(null);
@@ -44,6 +45,12 @@ export default function AgentJobsPanel({ onSaved }: { onSaved: () => void }) {
       <p className="text-sm">{report.readiness.ready && report.storageReady ? 'Ready for editorial runs' : 'Configuration required'} · Daily run limit: {report.readiness.dailyRunLimit} · Schedule: {report.readiness.scheduled ? 'Enabled in configuration' : 'Disabled'}</p>
       {report.readiness.missing.length > 0 && <p className="text-xs text-gray-600 break-words">Missing configuration: {report.readiness.missing.join(', ')}</p>}
       {!report.storageReady && <p className="text-sm text-amber-700">The private job database is unavailable. Complete connection and migrations first.</p>}
+      {report.queue && <div className="border rounded-xl p-3 text-sm space-y-1">
+        <p className="font-semibold">Discovery queue</p>
+        <p>Queued: {report.queue.events.queued || 0} · Processing: {report.queue.events.processing || 0} · Published: {report.queue.events.published || 0} · Held: {report.queue.events.held || 0} · Failed: {report.queue.events.failed || 0}</p>
+        {report.queue.lastCycle && <p className="text-xs">Latest cycle: {report.queue.lastCycle.state}{report.queue.lastCycle.completed_at ? ` · ${new Date(report.queue.lastCycle.completed_at).toLocaleString()}` : ''}{report.queue.lastCycle.summary?.error ? ` · ${report.queue.lastCycle.summary.error}` : ''}</p>}
+        {report.queue.alerts.slice(0,3).map((alert,index)=><p className="text-xs text-amber-700" key={index}>{alert.code} · {new Date(alert.created_at).toLocaleString()}</p>)}
+      </div>}
       <div className="flex flex-wrap gap-3">
         <button disabled={busy || !report.storageReady || !report.readiness.ready} onClick={() => run(pendingKey || `manual:${crypto.randomUUID()}`)} className="bg-primary text-white font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-50">{busy ? 'Processing news…' : pendingKey ? 'Check or retry previous run' : 'Process news'}</button>
         <button disabled={busy} onClick={() => refresh().catch(() => setError('Could not refresh job history.'))} className="text-sm font-bold text-primary disabled:opacity-50">Refresh status</button>

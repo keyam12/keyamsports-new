@@ -12,6 +12,7 @@ const rows = [
 const fixture = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
   if (req.url.startsWith('/rest/v1/rpc/check_private_rate_limit')) return res.end(JSON.stringify({ok:true,retryAfter:0}));
+  if (req.url.startsWith('/rest/v1/rpc/editorial_queue_status')) return res.end(JSON.stringify({events:{queued:2},lastCycle:null,alerts:[],feedCursors:[]}));
   if (req.url.startsWith('/rest/v1/agent_jobs')) return res.end('[]');
   res.end(JSON.stringify(rows));
 });

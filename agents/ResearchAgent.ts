@@ -1,5 +1,5 @@
 /** Read-only evidence retrieval. No arbitrary hosts, redirects or invented sources. */
-const PRIMARY = ['nba.com','nfl.com','mlb.com','fifa.com','uefa.com','premierleague.com','laliga.com','manutd.com','fcbarcelona.com','realmadrid.com'];
+const PRIMARY = ['nba.com','nfl.com','fifa.com','uefa.com','premierleague.com','laliga.com','manutd.com','fcbarcelona.com','realmadrid.com'];
 const REPORTERS = ['espn.com','reuters.com','apnews.com','bbc.com','bbc.co.uk','sportsnet.ca'];
 export interface Evidence { url: string; primary: boolean; relevant: boolean; publishedAt?: string; text: string; checkedAt: string; }
 export interface Research { primaryVerified: boolean; evidence: Evidence[]; reasons: string[]; }

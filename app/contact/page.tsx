@@ -11,7 +11,7 @@ export default function Contact() {
     <div className="max-w-2xl mx-auto">
       <div className="bg-primary text-white p-8 rounded-2xl shadow-lg mb-6">
         <h1 className="flex items-center gap-3 text-3xl font-bold"><Icon name="mail" className="h-7 w-7" />Contact</h1>
-        <p className="opacity-90 mt-1">Tips, corrections, or partnership inquiries — we read everything.</p>
+        <p className="opacity-90 mt-1">Tips, corrections, or partnership inquiries.</p>
       </div>
       <div className="bg-white border rounded-2xl p-6 shadow-sm space-y-4">
         <div>
@@ -26,14 +26,14 @@ export default function Contact() {
         <div>
           <h2 className="font-bold text-lg mb-1">Corrections</h2>
           <p className="text-gray-700">
-            Found an error in one of our stories? Send the headline and what needs fixing —
-            we correct verified mistakes promptly.
+            Found an error in one of our stories? Send the headline, article URL and specific
+            factual issue to the newsroom email above for review.
           </p>
         </div>
         <div>
           <h2 className="font-bold text-lg mb-1">Advertising</h2>
           <p className="text-gray-700">
-            Interested in advertising with KEYAM SPORTS? Reach out and we&apos;ll share our media kit.
+            Interested in advertising with KEYAM SPORTS? Use the newsroom email above for inquiries.
           </p>
         </div>
       </div>
