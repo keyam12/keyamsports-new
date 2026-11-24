@@ -1,3 +1,10 @@
 {
-  "crons": [{ "path": "/api/cron/agents", "schedule": "0 12 * * *" }]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "schedules": {
+    "editorial-daily": {
+      "path": "/api/cron/agents",
+      "schedule": "0 12 * * *",
+      "requestMethod": "GET"
+    }
+  }
 }
