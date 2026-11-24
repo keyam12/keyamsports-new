@@ -1,3 +1,4 @@
+import { superviseOperations } from '../../../../agents/AdminAgent';
 import { isAdmin, isTrustedOrigin } from "../../../../lib/adminAuth";
 import { agentReadiness, runDraftJob } from "../../../../lib/agentJobs";
 import { supabaseAdmin } from "../../../../lib/supabase";
@@ -18,8 +19,9 @@ export async function GET(req: Request) {
     .order("updated_at", { ascending: false }).limit(20);
   const [{data,error},queue] = await Promise.all([history,db.rpc("editorial_queue_status")]);
   if (error) console.error("[agent-jobs] Private history unavailable");
-  return Response.json({ readiness, queueReady:!queue.error, queue:queue.error?null:queue.data, jobs: (data || []).map(job => ({ ...job, context: job.context ? {
-    seniorEditorVerdict: job.context.seniorEditorVerdict, seniorEditorNotes: job.context.seniorEditorNotes,
+  const admin = superviseOperations({ready:readiness.ready,storageReady:!error,queueReady:!queue.error,paused:process.env.PAUSE_PUBLISHING==='true',scheduled:readiness.scheduled,jobs:data || []});
+  return Response.json({ readiness, admin, queueReady:!queue.error, queue:queue.error?null:queue.data, jobs: (data || []).map(job => ({ ...job, context: job.context ? {
+    adminReview: job.context.adminReview, seniorEditorVerdict: job.context.seniorEditorVerdict, seniorEditorNotes: job.context.seniorEditorNotes,
   } : null })), storageReady: !error }, { headers });
 }
 export async function POST(req: Request) {

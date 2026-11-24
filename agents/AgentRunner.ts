@@ -12,7 +12,7 @@ import { hasApiKey } from "./llm";
 import { getPublishedArticles } from "../lib/articles";
 
 import { researchStory } from "./ResearchAgent";
-import { publicationDecision } from "../lib/editorialPolicy";
+import { reviewForPublication } from "./AdminAgent";
 
 const SCOUT_SPORTS = ["NBA", "NFL", "MLB", "Soccer"];
 
@@ -107,7 +107,8 @@ export async function runCrew(
   ctx.article = review.article;
   ctx.seniorEditorVerdict = review.verdict;
   ctx.seniorEditorNotes = review.notes;
-  ctx.automation = publicationDecision({topic:ctx.topic,article:ctx.article,verdict:review.verdict,assessment:review.assessment,research:ctx.research});
+  ctx.adminReview = reviewForPublication({topic:ctx.topic,article:ctx.article,verdict:review.verdict,assessment:review.assessment,research:ctx.research}, emit);
+  ctx.automation = ctx.adminReview.decision;
 
   emit({ type: "run_done", message: "Editorial preparation complete. Automatic publication policy will evaluate the stored result.", payload: ctx });
   return ctx;

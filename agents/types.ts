@@ -28,6 +28,7 @@ export interface RunContext {
   category?: "basketball" | "football" | "baseball" | "soccer";
   research?: import("./ResearchAgent").Research;
   automation?: import("../lib/editorialPolicy").EditorialDecision;
+  adminReview?: import("./AdminAgent").AdminReview;
   /** Raw findings from the scout */
   findings: string;
   /** Recap written by the writer */

@@ -5,11 +5,12 @@ interface Job {
   input_tokens: number; output_tokens: number; usage_incomplete: boolean;
   agent_publications?: {state:string;risk_tier:number;reasons:string[];public_url?:string} | {state:string;risk_tier:number;reasons:string[];public_url?:string}[];
   error_code?: string; updated_at: string; lease_until: string;
-  context?: { seniorEditorVerdict?: string; seniorEditorNotes?: string[] };
+  context?: { adminReview?: {reviewedAt:string;decision:{decision:string;riskTier:number;reasons:string[]}}; seniorEditorVerdict?: string; seniorEditorNotes?: string[] };
 }
 interface Report {
   readiness: { ready: boolean; missing: string[]; dailyRunLimit: number; scheduled: boolean };
   storageReady: boolean; jobs: Job[];
+  admin?: {status:string;checkedAt:string;reasons:string[]};
   queue?: {events:Record<string,number>;lastCycle?:{state:string;completed_at?:string;summary?:{error?:string}};alerts:{code:string;created_at:string}[]};
 }
 export default function AgentJobsPanel({ onSaved }: { onSaved: () => void }) {
@@ -39,10 +40,12 @@ export default function AgentJobsPanel({ onSaved }: { onSaved: () => void }) {
     }
   }
   return <section className="bg-white border rounded-2xl p-5 shadow-sm space-y-3" aria-labelledby="agent-jobs-title">
-    <h2 id="agent-jobs-title" className="font-bold">Editorial automation</h2>
+    <h2 id="agent-jobs-title" className="font-bold">Editorial automation · Admin Agent</h2>
     <p className="text-sm text-gray-600">Research, write and review news. Eligible Tier 1/2 stories publish automatically; uncertain or sensitive stories are retained.</p>
+    <p className="text-xs text-gray-500">El Admin Agent aplica la aprobación final basada en reglas y evidencia del Senior Editor. No añade llamadas de IA ni aprueba noticias antiguas automáticamente.</p>
     {!report ? <p className="text-sm">Loading agent status…</p> : <>
       <p className="text-sm">{report.readiness.ready && report.storageReady ? 'Ready for editorial runs' : 'Configuration required'} · Daily run limit: {report.readiness.dailyRunLimit} · Schedule: {report.readiness.scheduled ? 'Enabled in configuration' : 'Disabled'}</p>
+      {report.admin && <div className="text-sm" aria-live="polite"><p>Supervisión admin: {report.admin.status} · <time dateTime={report.admin.checkedAt}>{new Date(report.admin.checkedAt).toLocaleString()}</time></p>{report.admin.reasons.map(reason=><p key={reason} className="text-xs text-amber-700">{reason}</p>)}<p className="text-xs text-gray-500">Estado consultado al cargar o actualizar el panel; no confirma que el programador haya ejecutado un ciclo.</p></div>}
       {report.readiness.missing.length > 0 && <p className="text-xs text-gray-600 break-words">Missing configuration: {report.readiness.missing.join(', ')}</p>}
       {!report.storageReady && <p className="text-sm text-amber-700">The private job database is unavailable. Complete connection and migrations first.</p>}
       {report.queue && <div className="border rounded-xl p-3 text-sm space-y-1">
@@ -60,6 +63,7 @@ export default function AgentJobsPanel({ onSaved }: { onSaved: () => void }) {
         <p className="font-semibold">{((Array.isArray(job.agent_publications) ? job.agent_publications[0]?.state : job.agent_publications?.state) || job.state).replaceAll('_', ' ')} · Attempt {job.attempts}/3</p>
         <p className="text-xs text-gray-600">Updated: <time dateTime={job.updated_at}>{new Date(job.updated_at).toLocaleString()}</time> · Input tokens: {job.input_tokens} · Output tokens: {job.output_tokens}{job.usage_incomplete ? ' · Usage incomplete' : ''}</p>
         {job.error_code && <p>Run failed. Check configuration before retrying.</p>}
+        {job.context?.adminReview && <div><p>Decisión Admin: {job.context.adminReview.decision.decision} · Tier {job.context.adminReview.decision.riskTier}</p>{job.context.adminReview.decision.reasons.map((reason,index)=><p className="text-xs" key={index}>{reason}</p>)}</div>}
         {job.context?.seniorEditorVerdict && <p>Automated review: {job.context.seniorEditorVerdict}</p>}
         {(job.context?.seniorEditorNotes || []).map((note, index) => <p key={index} className="text-xs">{note}</p>)}
         {job.agent_publications && (() => {

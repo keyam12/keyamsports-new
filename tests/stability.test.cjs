@@ -496,3 +496,20 @@ test('article presentation removes only duplicate URL footers and preserves sour
   assert.equal(articlePresentation(unknown, [url]).body, unknown);
   assert.equal(articlePresentation(`Body with inline reference ${url}`, [url]).body, `Body with inline reference ${url}`);
 });
+
+test('Admin Agent cannot override missing evidence or an unapproved Senior Editor review', () => {
+  const { reviewForPublication, superviseOperations } = require('../agents/AdminAgent.ts');
+  const ctx={topic:'Official update',article:'Routine team update.',verdict:'APPROVED',assessment:{decision:'APPROVE',riskTier:1,allClaimsSupported:true,contradictions:false,contentType:'official_team_update'}};
+  const held=reviewForPublication(ctx);
+  assert.equal(held.decision.decision,'HOLD');
+  assert.ok(held.decision.reasons.includes('Fresh primary evidence not verified.'));
+  const now=new Date().toISOString();const research={primaryVerified:true,evidence:[{url:'https://nba.com/news/fixture',primary:true,relevant:true,publishedAt:now,checkedAt:now,text:'Fixture only.'}],reasons:[]};
+  assert.equal(reviewForPublication({...ctx,research}).decision.decision,'APPROVE');
+  assert.equal(reviewForPublication({...ctx,research,verdict:'NEEDS_REVIEW'}).decision.decision,'HOLD');
+  assert.equal(reviewForPublication({...ctx,research,topic:'Unconfirmed arrest'}).decision.decision,'HOLD');
+  const monitor={ready:true,storageReady:true,queueReady:true,paused:false,scheduled:true,jobs:[]};
+  assert.equal(superviseOperations(monitor).status,'unverified');
+  assert.equal(superviseOperations({...monitor,paused:true}).status,'attention');
+  assert.equal(superviseOperations({...monitor,jobs:[{state:'failed'}]}).status,'attention');
+  assert.equal(superviseOperations({...monitor,jobs:[{state:'needs_review'}]}).status,'observed');
+});
