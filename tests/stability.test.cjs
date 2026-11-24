@@ -484,3 +484,15 @@ test('feed failure is distinct from an empty successful feed',async()=>{
     const failed=await getHeadlineBatch('NBA');assert.equal(failed.feeds[0].available,false);assert.equal(failed.feeds[0].error,'UPSTREAM_HTTP_503');
   }finally{global.fetch=original;}
 });
+
+test('article presentation removes only duplicate URL footers and preserves source evidence', () => {
+  const { articlePresentation } = require('../lib/articlePresentation.ts');
+  const url = 'https://www.espn.com/nfl/story/_/id/123/test';
+  assert.deepEqual(articlePresentation(`Article body.\nSources: - ${url}`, [url, url]), {body:'Article body.',sources:[url]});
+  assert.equal(articlePresentation(`Article body.\nFuentes:\n- ${url}`, [url]).body, 'Article body.');
+  const prose = `Body.\nSources: Reporting remains disputed. ${url}`;
+  assert.equal(articlePresentation(prose, [url]).body, prose);
+  const unknown = 'Body.\nSources: https://example.com/another';
+  assert.equal(articlePresentation(unknown, [url]).body, unknown);
+  assert.equal(articlePresentation(`Body with inline reference ${url}`, [url]).body, `Body with inline reference ${url}`);
+});
