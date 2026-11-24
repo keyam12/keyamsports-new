@@ -1,7 +1,6 @@
 import { safeEqual } from "../../../../lib/adminAuth";
 import { agentReadiness } from "../../../../lib/agentJobs";
-import { reconcilePendingPublication } from "../../../../lib/autoPublisher";
-import { runEditorialCycle } from "../../../../lib/editorialCycle";
+import { runAdminCycle } from "../../../../lib/adminCycle";
 import { agentDiagnostics } from "../../../../lib/agentDiagnostics";
 export const dynamic = "force-dynamic";
 export const maxDuration = 240;
@@ -21,8 +20,7 @@ export async function GET(req: Request) {
   }
   if (process.env.PAUSE_PUBLISHING === "true") return Response.json({paused:true,published:0,held:0,failed:0});
   try {
-    await reconcilePendingPublication();
-    const result = await runEditorialCycle();
+    const result = await runAdminCycle(mode === "test");
     return Response.json(result, { status: result.error ? 503 : 200, headers: { "Cache-Control": "no-store" } });
   } catch {
     console.error("[cron/agents] Scheduled draft failed");

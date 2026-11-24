@@ -513,3 +513,25 @@ test('Admin Agent cannot override missing evidence or an unapproved Senior Edito
   assert.equal(superviseOperations({...monitor,jobs:[{state:'failed'}]}).status,'attention');
   assert.equal(superviseOperations({...monitor,jobs:[{state:'needs_review'}]}).status,'observed');
 });
+
+test('Admin cycle executes the newsroom and checks storage without bypassing pause or holds', async () => {
+  const jobs=require('../lib/agentJobs.ts'),db=require('../lib/supabase.ts'),publisher=require('../lib/autoPublisher.ts'),cycles=require('../lib/editorialCycle.ts');
+  const originals={ready:jobs.agentReadiness,db:db.supabaseAdmin,reconcile:publisher.reconcilePendingPublication,cycle:cycles.runEditorialCycle,pause:process.env.PAUSE_PUBLISHING,env:process.env.VERCEL_ENV};
+  const {runAdminCycle}=require('../lib/adminCycle.ts');let calls=[];
+  try {
+    process.env.VERCEL_ENV='production';delete process.env.PAUSE_PUBLISHING;
+    jobs.agentReadiness=()=>({ready:true,scheduled:true});
+    db.supabaseAdmin=()=>({rpc:async()=>{calls.push('storage');return {data:{events:{held:1}},error:null}}});
+    publisher.reconcilePendingPublication=async()=>{calls.push('reconcile');return null};
+    cycles.runEditorialCycle=async()=>{calls.push('cycle');return {published:0,held:1,failed:0,error:null}};
+    const result=await runAdminCycle();assert.equal(result.held,1);assert.equal(result.published,0);assert.equal(result.admin.status,'checked');
+    assert.deepEqual(calls,['storage','reconcile','cycle','storage']);
+    calls=[];process.env.PAUSE_PUBLISHING='true';assert.equal((await runAdminCycle()).paused,true);assert.deepEqual(calls,[]);
+    delete process.env.PAUSE_PUBLISHING;
+    db.supabaseAdmin=()=>({rpc:async()=>({data:null,error:{message:'fixture'}})});
+    await assert.rejects(runAdminCycle(),/ADMIN_QUEUE_UNAVAILABLE/);assert.deepEqual(calls,[]);
+  } finally {
+    jobs.agentReadiness=originals.ready;db.supabaseAdmin=originals.db;publisher.reconcilePendingPublication=originals.reconcile;cycles.runEditorialCycle=originals.cycle;
+    for(const [k,v] of [['PAUSE_PUBLISHING',originals.pause],['VERCEL_ENV',originals.env]]){if(v===undefined)delete process.env[k];else process.env[k]=v;}
+  }
+});

@@ -17,3 +17,9 @@ Existing job records without `adminReview` remain readable and do not acquire in
 ## Verification
 
 Application tests exercise eligible approval, missing evidence, unapproved reviews, sensitive allegations and operational attention states. Typecheck and build verify integration. An actual new production run must still be inspected to verify persisted Admin review, database publication decision and the public URL together.
+
+## Scheduled execution ownership
+
+The authenticated schedule route delegates to `runAdminCycle`: it checks production readiness and queue storage, reconciles one pending publication verification, invokes the real editorial cycle, and reads the durable queue again afterward. It returns/logs a checked or attention outcome and never converts HOLD into APPROVE. A successful postcheck means storage was readable and the cycle returned no error; it does not guarantee publication or prove all providers are healthy. The original cycle already records its durable outcome. No browser or open administration panel is needed for a scheduled invocation.
+
+The trigger remains daily and the model budget remains unchanged. This is not a continuous 24-hour process and does not create 15–30 minute publication. A 24-hour operational trial still needs evidence that Vercel delivered a scheduled run and that the resulting Admin review/publication was persisted.
