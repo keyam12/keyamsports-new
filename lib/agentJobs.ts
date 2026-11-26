@@ -41,7 +41,7 @@ export function draftFromContext(ctx: RunContext) {
     status: "draft", ai: true });
 }
 
-export async function runDraftJob(key: string, emit?: (event: AgentEvent) => void, opts?: {headlines: import("./headlines").Headline[]}) {
+export async function runDraftJob(key: string, emit?: (event: AgentEvent) => void, opts?: {headlines: import("./headlines").Headline[]; research?: import("../agents/ResearchAgent").Research}) {
   if (process.env.PAUSE_PUBLISHING === "true") return {claimed:false,limited:false,paused:true,job:null};
   const readiness = agentReadiness();
   if (!readiness.ready) throw new Error("Agent setup incomplete");

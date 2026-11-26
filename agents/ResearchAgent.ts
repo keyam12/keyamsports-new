@@ -13,11 +13,33 @@ function plain(html: string) {
     .replace(/&(?:amp|quot|apos|lt|gt|nbsp);/g,x=>({'&amp;':'&','&quot;':'"','&apos;':"'",'&lt;':'<','&gt;':'>','&nbsp;':' '}[x] || ' '))
     .replace(/\s+/g,' ').trim();
 }
+function structuredArticle(html: string, expectedHeading = ''): {headline?:string;articleBody?:string;datePublished?:string} | null {
+  let remaining=200;
+  const normalize=(value:string)=>plain(value).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const visit=(value:unknown,depth=0): {headline?:string;articleBody?:string;datePublished?:string} | null => {
+    if(--remaining<0 || depth>8 || !value || typeof value!=='object')return null;
+    if(Array.isArray(value)){for(const item of value){const found=visit(item,depth+1);if(found)return found;}return null;}
+    const obj=value as Record<string,unknown>;
+    const types=Array.isArray(obj['@type'])?obj['@type']:[obj['@type']];
+    if(types.some(t=>['NewsArticle','Article','SportsArticle','ReportageNewsArticle'].includes(String(t))) && typeof obj.headline==='string' && obj.headline.trim().length>0 && (!expectedHeading || normalize(obj.headline).includes(normalize(expectedHeading)) || normalize(expectedHeading).includes(normalize(obj.headline)))) {
+      return {headline:obj.headline,articleBody:typeof obj.articleBody==='string'?obj.articleBody:undefined,datePublished:typeof obj.datePublished==='string'?obj.datePublished:undefined};
+    }
+    for(const key of ['@graph','mainEntity']){const found=visit(obj[key],depth+1);if(found)return found;}
+    return null;
+  };
+  for(const tag of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    if(tag[1].length>200_000)continue;
+    try{const found=visit(JSON.parse(tag[1]));if(found)return found;}catch{/* malformed structured data is not evidence */}
+  }
+  return null;
+}
 export function evidenceFromHtml(url: string, html: string, topic: string): Evidence | null {
-  const heading=plain(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '');
+  const pageHeading=plain(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '');
+  const structured = structuredArticle(html,pageHeading);
+  const heading=pageHeading || plain(structured?.headline || '');
   const content=html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1] || html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1];
-  if (!content) return null; // Navigation, snippets and headlines alone are not research.
-  const text=plain(content).slice(0,6500);
+  if (!content && !structured?.articleBody) return null; // Navigation, snippets and headlines alone are not research.
+  const text=plain(content || structured!.articleBody).slice(0,6500);
   if(text.length<150 || !heading) return null;
   const words=[...new Set(topic.toLowerCase().match(/[a-z]{4,}/g) || [])].filter(w=>!['confirmed','confirms','announces','announced','official','record','sports','today','after','before','against','coach','head','news','team'].includes(w));
   let publishedAt: string | undefined;
@@ -26,7 +48,7 @@ export function evidenceFromHtml(url: string, html: string, topic: string): Evid
     const value=tag.match(/content=["']([^"']+)["']/i)?.[1];
     if(value && Number.isFinite(Date.parse(value))){publishedAt=new Date(value).toISOString();break;}
   }
-  if(!publishedAt){const value=html.match(/"datePublished"\s*:\s*"([^"<>]+)"/)?.[1];if(value && Number.isFinite(Date.parse(value)))publishedAt=new Date(value).toISOString();}
+  if(!publishedAt){const value=structured?.datePublished;if(value && Number.isFinite(Date.parse(value)))publishedAt=new Date(value).toISOString();}
   const relevant=words.filter(w=>heading.toLowerCase().includes(w)).length>=2;
   return {url,publishedAt,primary:matches(new URL(url).hostname,PRIMARY),relevant,text:heading+'\n'+text,checkedAt:new Date().toISOString()};
 }
@@ -49,13 +71,13 @@ export async function researchStory(sources: string[], topic: string): Promise<R
   const originals=await Promise.allSettled(sources.slice(0,3).map(sourceHtml));
   for(const result of originals){if(result.status!=='fulfilled')continue;const {url,html}=result.value;
     const item=evidenceFromHtml(url,html,topic);if(item?.relevant)evidence.push(item);
-    for(const match of html.matchAll(/href=["'](https:\/\/[^"'<>\s]+)["']/gi)){
-      try {const link=new URL(match[1].replace(/&amp;/g,'&'));if(permittedEvidenceUrl(link.href) && matches(link.hostname,PRIMARY) && link.pathname.length>12 && !/privacy|terms|subscribe|login|ticket/i.test(link.pathname))officialLinks.add(link.href);}catch{}
+    for(const match of html.matchAll(/href=["']([^"'<>\s]+)["']/gi)){
+      try {const link=new URL(match[1].replace(/&amp;/g,'&'), url);if(permittedEvidenceUrl(link.href) && matches(link.hostname,PRIMARY) && link.pathname.length>12 && !/privacy|terms|subscribe|login|ticket/i.test(link.pathname))officialLinks.add(link.href);}catch{}
     }
   }
   const extra=await Promise.allSettled([...officialLinks].slice(0,2).map(sourceHtml));
   for(const result of extra){if(result.status!=='fulfilled')continue;const item=evidenceFromHtml(result.value.url,result.value.html,topic);if(item?.relevant)evidence.push(item);}
-  const unique=[...new Map(evidence.map(e=>[e.url,e])).values()].slice(0,3);
+  const unique=[...new Map(evidence.map(e=>[e.url,e])).values()].sort((a,b)=>Number(b.primary)-Number(a.primary)).slice(0,3);
   const primaryVerified=unique.some(e=>e.primary && e.relevant && e.publishedAt && Date.parse(e.publishedAt)<=Date.now() && Date.now()-Date.parse(e.publishedAt)<48*3600_000);
   return {primaryVerified,evidence:unique,reasons:primaryVerified?[]:['No accessible, relevant primary source verified; retain without publication.']};
 }

@@ -1,3 +1,4 @@
+import { readBoundedText } from '../../../../lib/requestBody';
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { isAdmin, isTrustedOrigin } from "../../../../lib/adminAuth";
@@ -14,8 +15,8 @@ function failure(error: unknown) {
   return NextResponse.json({ error: "Article operation failed. Check server configuration and logs." }, { status: 500 });
 }
 async function body(req: Request): Promise<Record<string, unknown>> {
-  const text = await req.text();
-  if (text.length > 65_536) throw new ArticleInputError("Request is too large.");
+  let text: string;
+  try { text = await readBoundedText(req, 65_536); } catch { throw new ArticleInputError("Request is too large."); }
   try {
     const data = JSON.parse(text);
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error();

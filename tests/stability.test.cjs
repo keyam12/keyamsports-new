@@ -443,7 +443,9 @@ test('discovery identities remove tracking and slot keys preserve 15/30-minute b
 test('a queued cycle persists discovery first, uses a stable event job and defers exhausted budgets',async()=>{
   const db=require('../lib/supabase.ts'), feeds=require('../lib/headlines.ts'), jobs=require('../lib/agentJobs.ts');
   const {runEditorialCycle}=require('../lib/editorialCycle.ts');
-  const saved={db:db.supabaseAdmin,batch:feeds.getHeadlineBatch,job:jobs.runDraftJob};
+  const research=require('../agents/ResearchAgent.ts');
+  const saved={db:db.supabaseAdmin,batch:feeds.getHeadlineBatch,job:jobs.runDraftJob,research:research.researchStory};
+  research.researchStory=async()=>({primaryVerified:true,evidence:[],reasons:[]});
   const fixture={sport:'NBA',headline:'Local queued story',description:'Fixture only',link:'https://espn.com/story/fixture',published:new Date().toISOString()};
   const calls=[];let limited=false,blocked=false,failIngest=false;
   db.supabaseAdmin=()=>({rpc:async(name,args)=>{
@@ -473,7 +475,7 @@ test('a queued cycle persists discovery first, uses a stable event job and defer
     assert.equal((await runEditorialCycle('fixture-failure')).failed,1);
     assert.equal(calls.some(c=>c.name==='claim_editorial_event'),false);
     assert.equal(calls.find(c=>c.name==='finish_editorial_cycle').args.p_failed,true);
-  }finally{db.supabaseAdmin=saved.db;feeds.getHeadlineBatch=saved.batch;jobs.runDraftJob=saved.job;}
+  }finally{db.supabaseAdmin=saved.db;feeds.getHeadlineBatch=saved.batch;jobs.runDraftJob=saved.job;research.researchStory=saved.research;}
 });
 test('feed failure is distinct from an empty successful feed',async()=>{
   const {getHeadlineBatch}=require('../lib/headlines.ts');const original=global.fetch;
@@ -534,4 +536,62 @@ test('Admin cycle executes the newsroom and checks storage without bypassing pau
     jobs.agentReadiness=originals.ready;db.supabaseAdmin=originals.db;publisher.reconcilePendingPublication=originals.reconcile;cycles.runEditorialCycle=originals.cycle;
     for(const [k,v] of [['PAUSE_PUBLISHING',originals.pause],['VERCEL_ENV',originals.env]]){if(v===undefined)delete process.env[k];else process.env[k]=v;}
   }
+});
+
+test('research retains a fourth official source and follows allowed relative/protocol-relative links', async () => {
+  const {researchStory}=require('../agents/ResearchAgent.ts');const previous=global.fetch;
+  const date=new Date().toISOString();const text='Alpha Bravo won the fixture. '.repeat(12);
+  const article=`<h1>Alpha Bravo result</h1><meta property="article:published_time" content="${date}"><article>${text}</article>`;
+  let visited=[];
+  global.fetch=async url=>{visited.push(String(url));return new Response(String(url).includes('nba.com')?article:article+'<a href="//www.nba.com/news/alpha-bravo-result">Official account</a>',{headers:{'content-type':'text/html'}})};
+  try {
+    const result=await researchStory(['https://espn.com/story/a','https://reuters.com/story/b','https://apnews.com/story/c'],'Alpha Bravo result');
+    assert.equal(result.primaryVerified,true);
+    assert.ok(result.evidence.some(e=>e.primary));assert.equal(result.evidence.length,3);
+    assert.ok(visited.includes('https://www.nba.com/news/alpha-bravo-result'));
+  }finally{global.fetch=previous;}
+});
+
+test('research accepts actual typed structured article text, not navigation or unrelated JSON dates', () => {
+  const {evidenceFromHtml}=require('../agents/ResearchAgent.ts');
+  const date=new Date().toISOString();
+  const data={'@type':'NewsArticle',headline:'Alpha Bravo official result',datePublished:date,articleBody:'Alpha Bravo fixture verified text. '.repeat(8)};
+  const html=`<script type="application/ld+json">${JSON.stringify(data)}</script>`;
+  const evidence=evidenceFromHtml('https://nba.com/news/fixture',html,'Alpha Bravo result');
+  assert.equal(evidence.primary,true);assert.equal(evidence.relevant,true);assert.equal(evidence.publishedAt,date);
+  assert.equal(evidenceFromHtml('https://nba.com/news/fixture','<h1>Alpha Bravo result</h1><script type="application/ld+json">{"@type":"WebSite","datePublished":"2026-01-01"}</script>','Alpha Bravo result'),null);
+});
+
+test('bounded bodies enforce actual streamed bytes even without Content-Length', async () => {
+  const {readBoundedText}=require('../lib/requestBody.ts');
+  assert.equal(await readBoundedText(new Request('https://keyam.test',{method:'POST',body:'{}'}),2),'{}');
+  await assert.rejects(readBoundedText(new Request('https://keyam.test',{method:'POST',body:'ááá'}),4),/too large/);
+  const stream=new ReadableStream({start(c){c.enqueue(new Uint8Array(3));c.enqueue(new Uint8Array(3));c.close()}});
+  await assert.rejects(readBoundedText(new Request('https://keyam.test',{method:'POST',body:stream,duplex:'half'}),4),/too large/);
+});
+
+test('forged IPs cannot avoid the global administrative login ceiling', async () => {
+  const limiter=require('../lib/rateLimit.ts');const original=limiter.rateLimit;let calls=[];
+  limiter.rateLimit=async key=>{calls.push(key);return {ok:false,retryAfter:60}};
+  try {
+    const login=require('../app/api/admin/login/route.ts');
+    for(const ip of ['1.1.1.1','2.2.2.2'])assert.equal((await login.POST(new Request('https://keyam.test/api/admin/login',{method:'POST',headers:{'x-forwarded-for':ip},body:'{}'}))).status,429);
+    assert.deepEqual(calls,['admin-login:global','admin-login:global']);
+  }finally{limiter.rateLimit=original;}
+});
+
+test('queued evidence failure inspects at most three events and never spends model quota', async () => {
+  const db=require('../lib/supabase.ts'),feeds=require('../lib/headlines.ts'),jobs=require('../lib/agentJobs.ts'),research=require('../agents/ResearchAgent.ts');
+  const old={db:db.supabaseAdmin,feed:feeds.getHeadlineBatch,job:jobs.runDraftJob,research:research.researchStory};let finished=0,generated=0;
+  const headline={sport:'NBA',headline:'Alpha Bravo fixture',description:'Fixture',link:'https://espn.com/story/test',published:new Date().toISOString()};
+  db.supabaseAdmin=()=>({rpc:async name=>({error:null,data:name==='claim_editorial_cycle'?{claimed:true,cycle:{lease:'fixture'}}:name==='claim_editorial_event'?{id:'event-'+finished,lease:'fixture',headlines:[headline]}:name==='finish_editorial_event'?(finished++,null):null})});
+  feeds.getHeadlineBatch=async()=>({headlines:[],feeds:[{available:true}]});research.researchStory=async()=>({primaryVerified:false,evidence:[],reasons:['Fixture missing evidence']});jobs.runDraftJob=async()=>{generated++;throw Error('Must not run')};
+  try {const r=await require('../lib/editorialCycle.ts').runEditorialCycle('fixture-preflight');assert.equal(r.held,3);assert.equal(finished,3);assert.equal(generated,0);}
+  finally{db.supabaseAdmin=old.db;feeds.getHeadlineBatch=old.feed;jobs.runDraftJob=old.job;research.researchStory=old.research;}
+});
+
+test('research never borrows a fresh structured date from a different recommended article', () => {
+  const {evidenceFromHtml}=require('../agents/ResearchAgent.ts');
+  const html=`<h1>Alpha Bravo official result</h1><main>${'Alpha Bravo verified fixture text. '.repeat(8)}</main><script type="application/ld+json">${JSON.stringify({'@type':'NewsArticle',headline:'Different unrelated story',datePublished:new Date().toISOString(),articleBody:'Unrelated content'})}</script>`;
+  assert.equal(evidenceFromHtml('https://nba.com/news/fixture',html,'Alpha Bravo result').publishedAt,undefined);
 });

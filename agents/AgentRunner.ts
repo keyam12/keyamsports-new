@@ -18,7 +18,7 @@ const SCOUT_SPORTS = ["NBA", "NFL", "MLB", "Soccer"];
 
 export async function runCrew(
   emitRaw: (event: AgentEvent) => void,
-  opts?: { excludeTopics?: string[]; headlines?: import("../lib/headlines").Headline[] }
+  opts?: { excludeTopics?: string[]; headlines?: import("../lib/headlines").Headline[]; research?: import("./ResearchAgent").Research }
 ): Promise<RunContext> {
   const emit: EmitFn = (e) => emitRaw({ ...e, at: new Date().toISOString() });
   if (!hasApiKey()) throw new Error("AI credentials are not configured; no demo news is generated.");
@@ -74,7 +74,7 @@ export async function runCrew(
     ctx.sources = sources;
   });
 
-  ctx.research = await researchStory(ctx.sources || [], ctx.topic);
+  ctx.research = opts?.research || await researchStory(ctx.sources || [], ctx.topic);
   if (ctx.research.evidence.length) {
     ctx.findings = ctx.research.evidence.map(e => `Source: ${e.url}\n${e.text}`).join("\n\n").slice(0, 11000);
     ctx.sources = ctx.research.evidence.map(e => e.url);

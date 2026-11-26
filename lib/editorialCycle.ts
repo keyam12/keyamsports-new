@@ -1,3 +1,4 @@
+import { researchStory } from '../agents/ResearchAgent';
 import { createHash } from 'node:crypto';
 import { supabaseAdmin } from './supabase';
 import { getHeadlineBatch,validateHeadline,type Headline } from './headlines';
@@ -31,11 +32,18 @@ export async function runEditorialCycle(key=editorialSlotKey()) {
     const batch=await getHeadlineBatch();
     summary.discovered=await rpc('ingest_editorial_events',{p_key:key,p_lease:cycle.lease,p_events:batch.headlines.map(discoveryRecord),p_feeds:batch.feeds});
     if(!batch.feeds.some(feed=>feed.available))throw new Error('ALL_DISCOVERY_FEEDS_UNAVAILABLE');
-    event=await rpc('claim_editorial_event',{p_key:key,p_cycle_lease:cycle.lease});
-    if(event) {
+    // Inspect up to three candidates without spending model quota on missing evidence.
+    for(let candidate=0;candidate<3;candidate++) {
+      event=await rpc('claim_editorial_event',{p_key:key,p_cycle_lease:cycle.lease});
+      if(!event)break;
       const headlines=(event.headlines || []).filter(validateHeadline) as Headline[];
       if(!headlines.length)throw new Error('EVENT_EVIDENCE_EXPIRED');
-      const result=await runDraftJob(`event:${event.id}`,undefined,{headlines});
+      const research=await researchStory(headlines.map(h=>h.link),headlines[0].headline);
+      if(!research.primaryVerified) {
+        await rpc('finish_editorial_event',{p_id:event.id,p_lease:event.lease,p_outcome:'held',p_job:null,p_reason:'PRIMARY_EVIDENCE_NOT_VERIFIED'});
+        summary.held++;event=null;continue;
+      }
+      const result=await runDraftJob(`event:${event.id}`,undefined,{headlines,research});
       const state=result.publication?.state;
       const outcome=result.limited || result.paused?'budget':state==='published'?'published':state==='hold'?'held':result.job?.state==='duplicate'?'duplicate':state==='failed'?'failed':'held';
       summary.budgetLimited=outcome==='budget';
@@ -44,6 +52,7 @@ export async function runEditorialCycle(key=editorialSlotKey()) {
       if(outcome==='failed')summary.failed++;
       await rpc('finish_editorial_event',{p_id:event.id,p_lease:event.lease,p_outcome:outcome,p_job:result.job?.id || null,p_reason:outcome==='budget'?'DAILY_BUDGET_REACHED':outcome==='held'?'EDITORIAL_HOLD':null});
       event=null;
+      break; // At most one AI run; the existing daily budget still applies.
     }
     await rpc('finish_editorial_cycle',{p_key:key,p_lease:cycle.lease,p_summary:summary,p_failed:false});
     console.info('[editorial-cycle]',JSON.stringify({cycle:key,...summary}));
